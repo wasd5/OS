@@ -3,12 +3,13 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 #include "my402list.c"
 
 typedef struct Transcation {
 	char type;
     long time;
-    float amount;
+    double amount;
     char description[1000];
 }Transcation;
 
@@ -53,9 +54,14 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	FILE* fp;
-	if((fp = fopen(argv[2], "r")) == NULL) {
-		printf("file open error\n");
-		exit(1);
+	if(argc == 3) {	
+		if((fp = fopen(argv[2], "r")) == NULL) {
+			printf("file open error\n");
+			exit(1);
+		}
+	}
+	else {
+        fp = stdin;
 	}
 	char buf[2048];
 	while(fgets(buf, 2048, fp) != NULL) {
@@ -80,13 +86,20 @@ int main(int argc, char **argv) {
 		long time = strtol(time_str, NULL, 0);
 		i++;
 		int ai = 0;
-		char amount_str[20]; 
-		while(i < strlen(buf) && buf[i] != '\t') {
+		char amount_str[50]; 
+		while(i < strlen(buf) && (buf[i] == '.' || (buf[i] >= '0' && buf[i] <= '9'))) {
+			//printf("BUF[i}%c  ", buf[i]);
 			amount_str[ai++] = buf[i++];
 		}
+		amount_str[ai] = '\0';
 		char* pEnd;
-		float amount = strtof(amount_str, &pEnd);
-		i++;
+		double amount = strtod(amount_str, &pEnd);
+		//printf("BUF    %s\n", buf);
+		//printf("time  AMT STR VAL       %ld, %s, %f\n", time, amount_str, amount);
+		//amount = (double)(int)(amount * 100) / 100;
+		while(i < strlen(buf) && !isalpha(buf[i])) {
+			i++;
+		}
 		if(amount > 10000000) {
 			printf("bad amount\n");
 			exit(1);
@@ -110,7 +123,8 @@ int main(int argc, char **argv) {
 		Transcation* T = (Transcation*)malloc(sizeof(Transcation));
 		T->type = type;
 		T->time = time;
-		T->amount = (float)(int)(amount * 100) / 100; //rounding
+		//T->amount = (double)(int)(amount * 100) / 100; //rounding
+		T->amount = amount;
 		strncpy(T->description, desp, sizeof(desp));
 		//printf("T    %c, %ld, %f, %s\n", T->type, T->time, T->amount, T->description);
 
@@ -177,16 +191,18 @@ int main(int argc, char **argv) {
     printf("+-----------------+--------------------------+----------------+----------------+\n");
     
     My402ListElem* f = My402ListFirst(list);
-    float balance = 0.0;
+    double balance = 0.00;
     while(f != &(list->anchor)) {
 
     	if(((Transcation*)f->obj)->type == '-') {
+    		//balance = (double)((int)(balance*100) - (int)(((Transcation*)f->obj)->amount*100)) /100;
     		balance -= ((Transcation*)f->obj)->amount;
     	}
     	else {
+    		//balance = (double)((int)(balance*100) + (int)(((Transcation*)f->obj)->amount*100)) /100;
     		balance += ((Transcation*)f->obj)->amount;
     	}
-
+    	//printf("BLC, AMT      %lf, %lf\n", balance, ((Transcation*)f->obj)->amount);
 
     	printf("| ");
 		time_t rawtime = ((Transcation*)f->obj)->time;
