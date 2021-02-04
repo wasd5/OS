@@ -16,5 +16,7 @@ endif
 /bin/cp w1data/my402list.h .
 make warmup1
 
+echo "========================== section A ============================="
+./section-A.csh
 echo "========================== section B ============================="
 ./section-B.csh
