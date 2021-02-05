@@ -34,7 +34,7 @@ Missing required section(s) in README file : -0 pts
 Submitted binary file : -0 pts
 Cannot compile : -0 pts
 Compiler warnings : -0 pts
-"make clean" : -? pts
+"make clean" : -0 pts
 Segmentation faults : -0 pts
 Program never terminates : -0 pts
 Separate compilation : -0 pts
@@ -55,7 +55,7 @@ will not get plus points for them; if the garder won't run such tests in the
 minus points section, you will lose all the points there.)  If there's nothing
 the grader should skip, please replace "(Comments?)" with "none".
 
-Please skip the following tests: (Comments?)
+Please skip the following tests: none
 
 +--------------------------------------------------------------------------------------------+
 | ADDITIONAL INFORMATION FOR GRADER (Optional, but the grader should read what you add here) |
