@@ -11,7 +11,7 @@
 #define INT_MAX 2147483647
 // time measured in this system
 struct timeval default_time;
-int terminated = 0;
+int terminated = 0;   // plus control c handling
 int is_tfile = 0;
 char tsfile[50] = "tsfile";            //(print this line only if -t is specified)
 int tokens = 0;
@@ -19,12 +19,12 @@ int dropped_tokens = 0;
 int packets = 0;
 int dropped_packets = 0;
 int num_bucket_token = 0;
-int num_to_arrive = 10;
 FILE* fp = NULL;
 
 double cur_sys_time_struct();
 void convert_to_sys_time(char* sys_time, int unix_time);
 
+int num_to_arrive = 20;
 double lambda = 1;            //(print this line only if -t is not specified)
 double mu = 0.35;             //(print this line only if -t is not specified)
 double r = 1.5;
@@ -34,8 +34,9 @@ double P = 3;                //(print this line only if -t is not specified)
 double percentage_dropped_token = 0;
 double percentage_dropped_packet = 0;
 double total_inter_arrival_time = 0;
-int is_arrival_thread = 1;
-int is_token_thread = 1;
+int is_arrival_thread = 1; // marks thread ending
+int is_token_thread = 1; // marks thread ending
+sigset_t sgst;
 
 typedef struct packet {
     int id;
@@ -53,7 +54,7 @@ typedef struct packet {
 
 My402List* q1;
 My402List* q2;
-pthread_t packet_thread, token_thread, s1_thread, s2_thread, ctrl_c_thread;
+pthread_t packet_thread, token_thread, s1_thread, s2_thread, control_c_signal_handler_thread;
 pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -73,8 +74,7 @@ int num_pkt_served = 0;
 
 void* packet_arrival_func() {
     for (int i = 1; i <= num_to_arrive; i++) {
-        //pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
-
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
         pthread_mutex_lock(&mutex);
         if (terminated) {
             pthread_mutex_unlock(&mutex);
@@ -118,12 +118,12 @@ void* packet_arrival_func() {
         //printf("=====================================DEBUG   inter_arrival_time  %lf\n", pk->inter_arrival_time);
         double actual_time = round((prev_arrival_time + pk->inter_arrival_time - cur_sys_time_struct()) / 1000) * 1000;
         pthread_mutex_unlock(&mutex);
-        //pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, 0);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, 0);
         if(actual_time >= 1000.0) {
             usleep(actual_time);
         }
         //printf("=====================================DEBUG      actual_time %lf\n", actual_time);
-        //pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
         pthread_mutex_lock(&mutex);
         if(terminated) {
             free(pk);
@@ -180,13 +180,11 @@ void* packet_arrival_func() {
     return 0;
 }
 
-
-
 void* token_arrival_func() {
     double last_arrival_time = 0;
     int flag = 1;
     while (flag) {
-        //pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
         pthread_mutex_lock(&mutex);
         if (terminated) {
             pthread_mutex_unlock(&mutex);
@@ -194,11 +192,11 @@ void* token_arrival_func() {
         }
         double actual_time = round((last_arrival_time + round(1000000.0 / r) - cur_sys_time_struct()) / 1000.0) * 1000;
         pthread_mutex_unlock(&mutex);
-        //pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, 0);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, 0);
         if(actual_time >= 1000.0) {
             usleep(actual_time);
         }
-        //pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
         pthread_mutex_lock(&mutex);
         if (terminated) {
             pthread_mutex_unlock(&mutex);
@@ -247,7 +245,7 @@ void* token_arrival_func() {
         pthread_mutex_unlock(&mutex);
         return 0;
     }
-    token_thread = FALSE;
+    is_token_thread = 0;
     pthread_cond_broadcast(&cv);
     pthread_mutex_unlock(&mutex);
     return 0;
@@ -264,7 +262,7 @@ void* server_func(void* arg) {
             flag = 0;
         }
         else {
-            while(My402ListEmpty(q2) && token_thread) {
+            while(My402ListEmpty(q2) && is_token_thread) {
                 pthread_cond_wait(&cv, &mutex);
             }
             if(My402ListEmpty(q2)) {
@@ -300,7 +298,7 @@ void* server_func(void* arg) {
         }
         pthread_mutex_unlock(&mutex);
     }
-    printf("==================================DEBUG   SID\n");
+    //printf("==================================DEBUG   SID\n");
     if(sid == 1) {
         stat_pkt_s1_ave = serve_time;
     }
@@ -310,6 +308,43 @@ void* server_func(void* arg) {
     return 0;
 }
 
+void* control_c_signal_handler_func() {
+    int signal;
+    while (1) {
+        sigwait(&sgst, &signal);
+        pthread_mutex_lock(&mutex);
+        printf("SIGINT signal caught, no new packets or tokens allowed\n");
+        pthread_cancel(token_thread);
+        pthread_cancel(packet_thread);
+        is_token_thread = 0;
+        is_arrival_thread = 0;
+        terminated = 1;
+        pthread_cond_broadcast(&cv);
+        char buf[20];
+        memset(buf, '\0', sizeof(buf));
+        // deal with q1
+        while(!My402ListEmpty(q1)) {
+            My402ListElem* list_element = My402ListFirst(q1);
+            packet* pk = (packet*)(list_element->obj);
+            convert_to_sys_time(buf, cur_sys_time_struct());
+            printf("%sms: p%d removed from Q1\n", buf, pk->id);
+            My402ListUnlink(q1, list_element);
+            free(pk);
+        }
+        // deal with q2
+        while(!My402ListEmpty(q2)) {
+            My402ListElem* list_element = My402ListFirst(q2);
+            packet* pk = (packet*)(list_element->obj);
+            memset(buf, '\0', sizeof(buf)),
+            convert_to_sys_time(buf, cur_sys_time_struct());
+            printf("%sms: p%d removed from Q2\n", buf, pk->id);
+            My402ListUnlink(q2, list_element);
+            free(pk);
+        }
+        pthread_mutex_unlock(&mutex);
+    }
+    return (0);
+}
 
 int main(int argc, char* argv[]) {
     for(int i = 1; i < argc; i += 2) {
@@ -437,8 +472,10 @@ int main(int argc, char* argv[]) {
     My402ListInit(q1);
     //printf("=============================DEBUG 2\n");
 	My402ListInit(q2);
-	//sigset_t set;
-    //pthread_create(&ctrl_c, 0, monitor, 0);
+	sigemptyset(&sgst);
+    sigaddset(&sgst, SIGINT);
+    sigprocmask(SIG_BLOCK, &sgst, 0);
+    pthread_create(&control_c_signal_handler_thread, 0, control_c_signal_handler_func, 0);
     pthread_mutex_lock(&mutex);
     gettimeofday(&default_time, 0);
     pthread_mutex_unlock(&mutex);
@@ -459,6 +496,7 @@ int main(int argc, char* argv[]) {
     printf("%sms: emulation begins\n", "00000000.000");
     pthread_create(&packet_thread, 0, packet_arrival_func, 0);
     pthread_create(&token_thread, 0, token_arrival_func, 0);
+    pthread_create(&control_c_signal_handler_thread, 0, control_c_signal_handler_func, 0);
     int sid = 1;
     pthread_create(&s1_thread, 0, server_func, (void*)sid);
     sid = 2;
@@ -496,7 +534,7 @@ int main(int argc, char* argv[]) {
         printf("    average packet service time N/A, no packet served\n");
     }
     else {
-        printf("    average packet service time = %.6g\n", (double)(total_service_time / num_pkt_served) / 1000000.0);
+        printf("    average packet service time = %.6g\n\n", (double)(total_service_time / num_pkt_served) / 1000000.0);
     }
     printf("    average number of packets in Q1 = %.6g\n    average number of packets in Q2 = %.6g\n    average number of packets at S1 = %.6g\n    average number of packets at S2 = %.6g\n\n", time_in_q1 / tfinish, time_in_q2 / tfinish, stat_pkt_s1_ave, stat_pkt_s2_ave);
     //printf("    average number of packets in Q2 = %.6g\n", time_in_q2 / tfinish);
