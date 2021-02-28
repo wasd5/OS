@@ -1,0 +1,42 @@
+Emulation Parameters:
+    number to arrive = 20
+    r = 5
+    B = 2
+    tsfile = w2data/f4.txt
+00000000.000ms: emulation begins
+00000200.344ms: token t1 arrives, token bucket now has 1 tokens
+00000233.162ms: p1 arrives, needs 1 tokens, inter-arrival time = 233.162ms
+00000233.187ms: p1 enters Q1
+00000233.190ms: p1 leaves Q1, time in Q1 = 0.003ms, token bucket now has 0 token
+00000233.197ms: p1 enters Q2
+00000233.484ms: p1 leaves Q2, time in Q2 = 0.287ms
+00000233.575ms: p1 begins service at S1, requesting 541ms of service
+00000400.552ms: token t2 arrives, token bucket now has 1 tokens
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+SIGINT signal caught, no new packets or tokens allowed
+00000774.711ms: p1 departs from S1, service time = 541.136ms, time in system = 541.549ms
+00000774.805ms: emulation ends
+
+Statistics:
+
+    average packet inter-arrival time = 0.116581
+    average packet service time = 0.541136
+
+    average number of packets in Q1 = 3.87194e-06
+    average number of packets in Q2 = 0.000370415
+    average number of packets at S1 = 541136
+    average number of packets at S2 = 0
+
+    average time a packet spent in system = 0.541549
+    standard deviation for time spent in system = 0
+
+    token drop probability = 0
+    packet drop probability = 0

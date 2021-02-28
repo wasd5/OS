@@ -1,0 +1,24 @@
+Emulation Parameters:
+    number to arrive = 15
+    lambda = 2.5
+    mu = 0.7
+    r = 2.5
+    B = 7
+    P = 2
+00000000.000ms: emulation begins
+SIGINT signal caught, no new packets or tokens allowed
+00000026.433ms: emulation ends
+
+Statistics:
+
+    average packet inter-arrival time = 0
+    average packet service time N/A, no packet served
+    average number of packets in Q1 = 0
+    average number of packets in Q2 = 0
+    average number of packets at S1 = 0
+    average number of packets at S2 = 0
+
+    average time a packet spent in system N/A, no packet served
+    standard deviation for time spent in system = (N/A, no packet served)
+    token drop probability N/A, no token arrived
+    packet drop probability = 0

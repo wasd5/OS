@@ -8,7 +8,6 @@
 #include <sys/time.h>
 #include "my402list.h"
 #include "cs402.h"
-#define INT_MAX 2147483647
 // time measured in this system
 struct timeval default_time;
 int terminated = 0;   // plus control c handling
@@ -239,7 +238,6 @@ void* token_arrival_func() {
         pthread_cond_broadcast(&cv);
         pthread_mutex_unlock(&mutex);
     }
-
     pthread_mutex_lock(&mutex);
     if (terminated) {
         pthread_mutex_unlock(&mutex);
@@ -250,7 +248,6 @@ void* token_arrival_func() {
     pthread_mutex_unlock(&mutex);
     return 0;
 }
-
 
 void* server_func(void* arg) {
     int sid = (int)arg; 
@@ -359,13 +356,14 @@ int main(int argc, char* argv[]) {
             	exit(1);
             }
             strcpy(tsfile, argv[i+1]);
-            char buf[20];
+            char buf[1026];
             memset(buf, '\0', sizeof(buf));
-            if(fgets(buf, 20, fp) != NULL) {
+            if(fgets(buf, 1026, fp) != NULL) {
                 if(atoi(buf) == 0 || atoi(buf) == -1) {
                     printf("invalid first line in tfile\n");
                     exit(1);
                 }
+                num_to_arrive = atoi(buf);
             }
         }
         else if(strcmp(argv[i], "-r") == 0) {
@@ -414,9 +412,9 @@ int main(int argc, char* argv[]) {
                 	printf("invalid lambda value\n");
                     exit(1);
                 }
-                // if (lambda < 0.1) {
-                //     lambda = 0.1;
-                // }
+                if (lambda < 0.1) {
+                    lambda = 0.1;
+                }
             }
             else if(strcmp(argv[i], "-mu") == 0) {
                 if(i + 1 >= argc) {
@@ -431,9 +429,9 @@ int main(int argc, char* argv[]) {
                 	printf("invalid mu value\n");
                     exit(1);
                 }
-                // if (mu < 0.1) {
-                //     mu = 0.1;
-                // }
+                if (mu < 0.1) {
+                    mu = 0.1;
+                }
             }
             else if (strcmp(argv[i], "-P") == 0) {
                 if(i + 1 >= argc) {
@@ -459,7 +457,7 @@ int main(int argc, char* argv[]) {
                     printf("invalid num_to_arrive value\n");
                     exit(1);
                 }
-                if(num_to_arrive < 0 || (int)num_to_arrive > INT_MAX) {
+                if(num_to_arrive < 0 || (int)num_to_arrive > 2147483647) {
                 	printf("invalid num_to_arrive value\n");
                     exit(1);
                 }
@@ -476,9 +474,6 @@ int main(int argc, char* argv[]) {
     sigaddset(&sgst, SIGINT);
     sigprocmask(SIG_BLOCK, &sgst, 0);
     pthread_create(&control_c_signal_handler_thread, 0, control_c_signal_handler_func, 0);
-    pthread_mutex_lock(&mutex);
-    gettimeofday(&default_time, 0);
-    pthread_mutex_unlock(&mutex);
     printf("Emulation Parameters:\n");
     printf("    number to arrive = %.d\n", num_to_arrive);
     if(!is_tfile) {
@@ -493,6 +488,9 @@ int main(int argc, char* argv[]) {
     if(is_tfile) {
         printf("    tsfile = %s\n", tsfile);
     }
+    pthread_mutex_lock(&mutex);
+    gettimeofday(&default_time, 0);
+    pthread_mutex_unlock(&mutex);
     printf("%sms: emulation begins\n", "00000000.000");
     pthread_create(&packet_thread, 0, packet_arrival_func, 0);
     pthread_create(&token_thread, 0, token_arrival_func, 0);
@@ -505,11 +503,9 @@ int main(int argc, char* argv[]) {
     pthread_join(token_thread, 0);
     pthread_join(s1_thread, 0);
     pthread_join(s2_thread, 0);
-    //pthread_mutex_lock(&mutex);
     char buf[20];
     memset(buf, '\0', sizeof(buf));
     convert_to_sys_time(buf, cur_sys_time_struct());
-
     double tfinish = cur_sys_time_struct();
     printf("%sms: emulation ends\n\n", buf);
     printf("Statistics:\n\n");
@@ -523,7 +519,6 @@ int main(int argc, char* argv[]) {
     percentage_dropped_packet = packets == 0 ? 0 : (double)dropped_packets / (double)packets;
     // stat_q1_avepk = time_in_q1 / tfinish;
     // stat_q2_avepk = time_in_q2 / tfinish;
-    
     if(packets == 0) {
         printf("    average packet inter-arrival time N/A, no packet arrived\n");
     }
@@ -560,7 +555,6 @@ int main(int argc, char* argv[]) {
     else {
         printf("    packet drop probability = %.6g\n", percentage_dropped_packet);
     }
-    //pthread_mutex_unlock(&mutex);
 	return 0;
 }
 
