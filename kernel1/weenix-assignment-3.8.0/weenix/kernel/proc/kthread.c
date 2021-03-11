@@ -103,7 +103,21 @@ kthread_destroy(kthread_t *t)
 kthread_t *
 kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kthread_create");
+        //NOT_YET_IMPLEMENTED("PROCS: kthread_create");
+        kthread_t kt = slab_obj_alloc(kthread_allocator);
+        memset(p, 0, sizeof(proc_t));
+        //kt_kstack
+        kt.kt_kstack = alloc_stack();
+        //kt_ctx
+        c->c_kstack = kt.kt_kstack;
+        kt.kt_ctx = context_setup(c, func, arg1, arg2, 
+                kt.kt_kstack, DEFAULT_STACK_SIZE, p->p_pagedir);
+        
+        kt.kt_proc = p;
+        kt.kt_cancelled = 0;
+        //kt.kt_wchan = (ktqueue_t)malloc(sizeof(kthread_t));
+        kt.kt_state = KT_NO_STATE;
+        list_insert_tail(p->p_threads, kt.kt_plink);
         return NULL;
 }
 
@@ -145,7 +159,12 @@ kthread_cancel(kthread_t *kthr, void *retval)
 void
 kthread_exit(void *retval)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kthread_exit");
+        //NOT_YET_IMPLEMENTED("PROCS: kthread_exit");
+        curthr->kt_retval = retval;
+        //clean
+        slab_obj_free(kthread_allocator, curthr);
+        //curthr = 
+        //context_make_active()
 }
 
 /*

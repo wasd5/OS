@@ -220,8 +220,37 @@ failed:
 proc_t *
 proc_create(char *name)
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_create");
-        return NULL;
+        //NOT_YET_IMPLEMENTED("PROCS: proc_create");
+        
+        proc_t p = slab_obj_alloc(proc_allocator);
+        memset(p, 0, sizeof(proc_t));
+
+        int next_pid = _proc_getid();
+        //assign p_pid for idle_proc or init_proc or other
+        if(next_pid == PID_IDLE){
+                p.p_pid = PID_IDLE;
+        }else if(next_pid == PID_INIT){
+                p.p_pid = PID_INIT;
+                proc_initproc = &p;
+                p.p_pproc = list_item(_proc_list.l_next, proc_t, p_pproc);
+        }else{
+                p.p_pid = next_pid;
+        }
+
+        //assign p_comm
+        strcpy(p.p_comm, name);
+        
+        //p_status
+
+        //p_stats
+        p.p_state = PROC_RUNNING;
+
+        //p_pagedir
+        p.p_pagedir = pt_create_pagedir();
+        //assign p_list_link
+        list_insert_tail(_proc_list, p.p_list_link);
+
+        return &p;
 }
 
 /**
@@ -312,8 +341,27 @@ proc_thread_exited(void *retval)
 pid_t
 do_waitpid(pid_t pid, int options, int *status)
 {
-        NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
-        return 0;
+        //NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
+        if(options != 0){
+                panic();
+        }
+        if(pid<-1){
+                panic();
+        }
+        list_t children_list = curproc->p_children;
+        proc_t *wait_p = proc_lookup(pid);
+        if(list_empty(children_list) || wait_p==NULL){
+                return -ECHILD;
+        }
+        if(pid==-1){
+                sched_sleep_on(curproc->p_wait);
+        }else{
+                sched_sleep_on(wait_p->p_wait);
+                
+        }
+        //?
+        status = 0; 
+        return pid;
 }
 
 /*
