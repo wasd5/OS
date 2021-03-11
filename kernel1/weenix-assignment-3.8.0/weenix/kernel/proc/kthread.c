@@ -163,6 +163,7 @@ kthread_exit(void *retval)
         curthr->kt_retval = retval;
         //clean
         slab_obj_free(kthread_allocator, curthr);
+        proc_thread_exited(retval);
         //curthr = 
         //context_make_active()
 }

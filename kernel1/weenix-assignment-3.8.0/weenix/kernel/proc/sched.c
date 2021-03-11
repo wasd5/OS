@@ -118,7 +118,12 @@ sched_queue_empty(ktqueue_t *q)
 int
 sched_cancellable_sleep_on(ktqueue_t *q)
 {
-        NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
+        //NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
+        ktqueue_enqueue(q, curthr);
+        sched_switch();
+        if(curthr->kt_cancelled==1){
+                //TODO
+        }
         return 0;
 }
 
@@ -176,7 +181,21 @@ sched_cancel(struct kthread *kthr)
 void
 sched_switch(void)
 {
-        NOT_YET_IMPLEMENTED("PROCS: sched_switch");
+        //NOT_YET_IMPLEMENTED("PROCS: sched_switch");
+        kthread_t *old_thread;
+        int oldIPL;
+        oldIPL = intr_setipl(IPL_HIGH);
+        while(sched_queue_empty(&kt_runq)){
+                intr_setipl(IPL_LOW);
+                //need halt cpu fix when deal with kernel3
+                intr_setipl(IPL_HIGH);
+        }
+        old_thread = curthr;
+        curthr = ktqueue_dequeue(&kt_runq);
+        //old_thread->kt_state = KT_SLEEP;
+        //curthr->kt_state = KT_RUN;
+        context_switch(old_thread->kt_ctx, curthr->kt_ctx);
+        intr_setipl(oldIPL);
 }
 
 /*
@@ -195,6 +214,10 @@ sched_switch(void)
 void
 sched_make_runnable(kthread_t *thr)
 {
-        NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
+        //NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
+        intr_disable();
+        ktqueue_enqueue(&kt_runq, thr);
+        thr->kt_state = KT_SLEEP;
+        intr_enable();
 }
 

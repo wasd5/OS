@@ -286,7 +286,7 @@ initproc_create(void)
         proc_thread_t pt;
         
         pt.p = proc_create("idle");
-        pt.t = kthread_create(pt.p, NULL, NULL, NULL);
+        pt.t = kthread_create(pt.p, initproc_run, NULL, NULL);
         return pt.t;
 }
 
