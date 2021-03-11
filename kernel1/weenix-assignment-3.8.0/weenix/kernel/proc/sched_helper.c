@@ -41,7 +41,8 @@ void
 sched_sleep_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");
-        ktqueue_enqueue(q, curthr)
+        ktqueue_enqueue(q, curthr);
+        curthr->kt_state = KT_SLEEP;
         sched_switch();
 }
 
@@ -58,11 +59,9 @@ void
 sched_broadcast_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");
-        kthread_t *kt;
-        list_iterate_begin(q, kt, kthread_t, kt_wchan) {
+        while(q->tq_size!=0){
                 kthread_t *kt = ktqueue_dequeue(q);
                 sched_make_runnable(kt);
-        } list_iterate_end();
-        return NULL;
+        }
 }
 

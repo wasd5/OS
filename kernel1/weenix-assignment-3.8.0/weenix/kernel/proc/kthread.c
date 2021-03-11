@@ -104,21 +104,30 @@ kthread_t *
 kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 {
         //NOT_YET_IMPLEMENTED("PROCS: kthread_create");
-        kthread_t kt = slab_obj_alloc(kthread_allocator);
-        memset(p, 0, sizeof(proc_t));
+        kthread_t *kt = (kthread_t *)slab_obj_alloc(kthread_allocator);
+        //memset(kt, 0, sizeof(kthread_t));
         //kt_kstack
-        kt.kt_kstack = alloc_stack();
-        //kt_ctx
-        c->c_kstack = kt.kt_kstack;
-        kt.kt_ctx = context_setup(c, func, arg1, arg2, 
-                kt.kt_kstack, DEFAULT_STACK_SIZE, p->p_pagedir);
-        
-        kt.kt_proc = p;
-        kt.kt_cancelled = 0;
-        //kt.kt_wchan = (ktqueue_t)malloc(sizeof(kthread_t));
-        kt.kt_state = KT_NO_STATE;
-        list_insert_tail(p->p_threads, kt.kt_plink);
-        return NULL;
+        kt->kt_kstack = alloc_stack();
+        //set kt_ctx
+        context_setup(&(kt->kt_ctx), func, arg1, arg2, kt->kt_kstack, DEFAULT_STACK_SIZE, p->p_pagedir);
+        //kt_retval
+        kt->kt_retval = NULL;
+        //kt_errno
+        kt->kt_errno = 0;
+        //kt_porc
+        kt->kt_proc = p;
+        //kt_cancelled
+        kt->kt_cancelled = 0;
+        //kt_wchan
+        kt->kt_wchan = NULL;
+        //kt_state
+        kt->kt_state = KT_NO_STATE;
+        //kt_qlink
+        list_link_init(&(kt->kt_qlink));
+        //kt_plink
+        list_link_init(&(kt->kt_plink));
+        list_insert_tail(&(p->p_threads), &(kt->kt_plink));
+        return kt;
 }
 
 /*
@@ -138,7 +147,13 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 void
 kthread_cancel(kthread_t *kthr, void *retval)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");
+        //NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");
+        if(kthr == curthr){
+                kthread_exit(retval);
+        }else{
+                kthr->kt_retval = retval;
+                sched_cancel(kthr);
+        }
 }
 
 /*
@@ -161,11 +176,7 @@ kthread_exit(void *retval)
 {
         //NOT_YET_IMPLEMENTED("PROCS: kthread_exit");
         curthr->kt_retval = retval;
-        //clean
-        slab_obj_free(kthread_allocator, curthr);
         proc_thread_exited(retval);
-        //curthr = 
-        //context_make_active()
 }
 
 /*

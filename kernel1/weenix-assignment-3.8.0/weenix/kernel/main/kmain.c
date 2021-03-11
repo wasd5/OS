@@ -182,14 +182,12 @@ bootstrap(int arg1, void *arg2)
         pt_template_init();
 
         //NOT_YET_IMPLEMENTED("PROCS: bootstrap");
-        //create idle_p
-        proc_thread_t pt;
-        
-        pt.p = proc_create("idle");
-        pt.t = kthread_create(pt.p, idleproc_run, NULL, NULL);
-        context_make_active(&(pt.t->kt_ctx));
-
-        //panic("weenix returned to bootstrap()!!! BAD!!!\n");
+        proc_t *p = proc_create("idle");
+        curproc = p;
+        kthread_t *kt = kthread_create(p, idleproc_run, arg1, arg2);
+        curthr = kt;
+        context_make_active(&(kt->kt_ctx));
+        panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
 }
 
@@ -283,11 +281,9 @@ static kthread_t *
 initproc_create(void)
 {
         //NOT_YET_IMPLEMENTED("PROCS: initproc_create");
-        proc_thread_t pt;
-        
-        pt.p = proc_create("idle");
-        pt.t = kthread_create(pt.p, initproc_run, NULL, NULL);
-        return pt.t;
+        proc_t *p = proc_create("init");
+        kthread_t *kt = kthread_create(p, initproc_run, NULL, NULL);
+        return kt;
 }
 
 
@@ -305,7 +301,6 @@ initproc_create(void)
 static void *
 initproc_run(int arg1, void *arg2)
 {
-        NOT_YET_IMPLEMENTED("PROCS: initproc_run");
-
+        //NOT_YET_IMPLEMENTED("PROCS: initproc_run");
         return NULL;
 }

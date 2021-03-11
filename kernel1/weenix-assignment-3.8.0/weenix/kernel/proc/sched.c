@@ -120,9 +120,10 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
         ktqueue_enqueue(q, curthr);
+        curthr->kt_state = KT_SLEEP_CANCELLABLE;
         sched_switch();
         if(curthr->kt_cancelled==1){
-                //TODO
+                kthread_exit(curthr->kt_retval);
         }
         return 0;
 }
@@ -139,7 +140,13 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 void
 sched_cancel(struct kthread *kthr)
 {
-        NOT_YET_IMPLEMENTED("PROCS: sched_cancel");
+        //NOT_YET_IMPLEMENTED("PROCS: sched_cancel");
+        kthr->kt_cancelled =1;
+        if(kthr->kt_state == KT_SLEEP_CANCELLABLE){
+                if(kthr->kt_wchan!=&(kt_runq)){
+                        sched_make_runnable(kthr);
+                }    
+        }
 }
 
 /*
@@ -184,7 +191,8 @@ sched_switch(void)
         //NOT_YET_IMPLEMENTED("PROCS: sched_switch");
         kthread_t *old_thread;
         int oldIPL;
-        oldIPL = intr_setipl(IPL_HIGH);
+        oldIPL = intr_getipl();
+        intr_setipl(IPL_HIGH);
         while(sched_queue_empty(&kt_runq)){
                 intr_setipl(IPL_LOW);
                 //need halt cpu fix when deal with kernel3
@@ -193,8 +201,9 @@ sched_switch(void)
         old_thread = curthr;
         curthr = ktqueue_dequeue(&kt_runq);
         //old_thread->kt_state = KT_SLEEP;
-        //curthr->kt_state = KT_RUN;
-        context_switch(old_thread->kt_ctx, curthr->kt_ctx);
+        curthr->kt_state = KT_RUN;
+        curproc = curthr->kt_proc;
+        context_switch(&(old_thread->kt_ctx), &(curthr->kt_ctx));
         intr_setipl(oldIPL);
 }
 
@@ -215,9 +224,11 @@ void
 sched_make_runnable(kthread_t *thr)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
-        intr_disable();
+        //intr_disable();
+        int oldIPL = intr_getipl();
+        intr_setipl(IPL_HIGH);
         ktqueue_enqueue(&kt_runq, thr);
         thr->kt_state = KT_SLEEP;
-        intr_enable();
+        intr_setipl(oldIPL);
 }
 
