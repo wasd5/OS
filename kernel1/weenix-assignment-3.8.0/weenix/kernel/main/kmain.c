@@ -64,6 +64,7 @@
 #include "test/kshell/kshell.h"
 #include "test/s5fs_test.h"
 
+
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
 GDB_DEFINE_HOOK(shutdown)
@@ -76,6 +77,8 @@ static void       hard_shutdown(void);
 
 static context_t bootstrap_context;
 extern int gdb_wait;
+
+extern void *faber_thread_test(int, void*);
 
 /**
  * This is the first real C function ever called. It performs a lot of
@@ -302,5 +305,8 @@ static void *
 initproc_run(int arg1, void *arg2)
 {
         //NOT_YET_IMPLEMENTED("PROCS: initproc_run");
+        proc_t *p = proc_create("faber test");
+        kthread_t *kt = kthread_create(p,faber_thread_test,arg1,arg2);
+        sched_make_runnable(kt);
         return NULL;
 }

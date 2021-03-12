@@ -243,10 +243,13 @@ proc_create(char *name)
         //p_children
         list_init(&(p->p_children));
         //assign parent child relationship
-        if(p->p_pid != 0){
+        if(p->p_pid != PID_IDLE){
                 p->p_pproc = curproc;
                 list_link_init(&(p->p_child_link));
                 list_insert_tail(&(curproc->p_children), &(p->p_child_link));
+        }else{
+                p->p_pproc = NULL;
+                list_link_init(&(p->p_child_link));
         }   
         //p_status
         p->p_status = 0;
@@ -303,12 +306,13 @@ proc_cleanup(int status)
                 list_iterate_begin(&curproc->p_children, p, proc_t, p_child_link) {
                         list_remove(&(p->p_child_link));
                         list_insert_tail(&(proc_initproc->p_children),&(p->p_child_link));
+                        p->p_pproc = proc_initproc;
                 } list_iterate_end();
         }
-        ktqueue_t p_wait = curproc->p_pproc->p_wait;
-        if(p_wait.tq_size!=0){
-                sched_wakeup_on(p_wait);
-        }
+        curproc->p_state = PROC_DEAD;
+        curproc->p_status = status;
+        sched_wakeup_on(&(curproc->p_pproc->p_wait));
+        
 }
 
 /*
@@ -350,8 +354,7 @@ proc_thread_exited(void *retval)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
         proc_cleanup(curproc->p_status);
-        curproc->p_state = PROC_DEAD;
-        sched_switch;
+        sched_switch();
 }
 
 /* If pid is -1 dispose of one of the exited children of the current
@@ -381,55 +384,72 @@ do_waitpid(pid_t pid, int options, int *status)
                 panic("pid<-1!\n");
         }
         */
-        list_t children_list = curproc->p_children;
-        proc_t *wait_p = proc_lookup(pid);
-        if(wait_p == NULL){
-                return -ECHILD;
-        }
+
+        proc_t *wait_p;
         proc_t *p;
-        int find = 0;
-        list_iterate_begin(&curproc->p_children, p, proc_t, p_child_link) {
-                if (p->p_pid == pid) {
-                        find = 1;
+        if(pid == -1){
+                if(list_empty(&curproc->p_children)){
+                        return -ECHILD;
                 }
-        } list_iterate_end();
-        
-        if(list_empty(&children_list) || find == 0){
-                return -ECHILD;
+        }else{
+                wait_p = proc_lookup(pid);
+                int find = 0;
+                list_iterate_begin(&curproc->p_children, p, proc_t, p_child_link) {
+                        if (p->p_pid == pid) {
+                                find = 1;
+                        }
+                } list_iterate_end();
+                if(find == 0){
+                        return -ECHILD;
+                }
         }
 
-        proc_t *dead_p;
         if(pid==-1){
-                while(0){
-                        sched_sleep_on(&(curproc->p_wait));
-                                list_iterate_begin(&(curproc->p_children), p, proc_t, p_child_link) {
-                                        if (p->p_state == PROC_DEAD) {
-                                        dead_p = p;
-                                        status = &(dead_p->p_status);
-                                        pid_t retpid = dead_p->p_pid;
+                while(1){
+                        list_iterate_begin(&(curproc->p_children), p, proc_t, p_child_link) {
+                                if (p->p_state == PROC_DEAD) {
+                                        status = &(p->p_status);
+                                        pid_t retpid = p->p_pid;
+                                        //remove p from curproc->p_children
+                                        list_remove(&(p->p_child_link));
                                         //destroy all threads in dead process
                                         kthread_t *d_kt;
-                                        list_iterate_begin(&(dead_p->p_threads), d_kt, kthread_t, kt_plink) {
-                                                  list_remove(d_kt->kt_plink);
-                                                  kthread_destroy(d_kt);      
+                                        list_iterate_begin(&(p->p_threads), d_kt, kthread_t, kt_plink) {
+                                                list_remove(&(d_kt->kt_plink));
+                                                kthread_destroy(d_kt);      
                                         } list_iterate_end();
+                                        //remove p from _proc_list
+                                        list_remove(&(p->p_list_link));
+                                        //free pagedir
+                                        page_free(p->p_pagedir);
+                                        //free p with alloc
+                                        slab_obj_free(proc_allocator, p);
                                         return retpid;
-                                        }
-                                } list_iterate_end();
+                                }
+                        } list_iterate_end();
+                        sched_sleep_on(&(curproc->p_wait));
                 }
         }else{
                 while(wait_p->p_state != PROC_DEAD){
                         sched_sleep_on(&(curproc->p_wait));
                 }
+                status = &(wait_p->p_status);
+                //remove p from curproc->p_children
+                list_remove(&(wait_p->p_child_link));
                 //destroy all threads in dead process
                 kthread_t *d_kt;
-                list_iterate_begin(&(dead_p->p_threads), d_kt, kthread_t, kt_plink) {
-                                list_remove(d_kt->kt_plink);
-                                kthread_destroy(d_kt);      
+                list_iterate_begin(&(wait_p->p_threads), d_kt, kthread_t, kt_plink) {
+                        kthread_destroy(d_kt);      
                 } list_iterate_end();
+                //remove p from _proc_list
+                list_remove(&(wait_p->p_list_link));
+                //free pagedir
+                page_free(wait_p->p_pagedir);
+                //free p with allocator
+                slab_obj_free(proc_allocator, wait_p);
                 return pid;
         }
-        
+        return -1;
 }
 
 /*

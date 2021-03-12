@@ -51,7 +51,9 @@ sched_wakeup_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
         kthread_t *kt = ktqueue_dequeue(q);
-        sched_make_runnable(kt);
+        if(kt != NULL){
+                sched_make_runnable(kt);
+        }
         return kt;
 }
 

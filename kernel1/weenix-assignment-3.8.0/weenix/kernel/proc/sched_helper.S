@@ -309,12 +309,16 @@ sched_wakeup_on:
 	call	ktqueue_dequeue
 	movl	%eax, -12(%ebp)
 	.loc 3 54 0
+	cmpl	$0, -12(%ebp)
+	je	.L21
+	.loc 3 55 0
 	movl	-12(%ebp), %eax
 	movl	%eax, (%esp)
 	call	sched_make_runnable
-	.loc 3 55 0
+.L21:
+	.loc 3 57 0
 	movl	-12(%ebp), %eax
-	.loc 3 56 0
+	.loc 3 58 0
 	leave
 	.cfi_restore 5
 	.cfi_def_cfa 4, 4
@@ -326,7 +330,7 @@ sched_wakeup_on:
 	.type	sched_broadcast_on, @function
 sched_broadcast_on:
 .LFB13:
-	.loc 3 60 0
+	.loc 3 62 0
 	.cfi_startproc
 	pushl	%ebp
 	.cfi_def_cfa_offset 8
@@ -334,27 +338,27 @@ sched_broadcast_on:
 	movl	%esp, %ebp
 	.cfi_def_cfa_register 5
 	subl	$40, %esp
-	.loc 3 62 0
-	jmp	.L23
-.L24:
+	.loc 3 64 0
+	jmp	.L24
+.L25:
 .LBB2:
-	.loc 3 63 0
+	.loc 3 65 0
 	movl	8(%ebp), %eax
 	movl	%eax, (%esp)
 	call	ktqueue_dequeue
 	movl	%eax, -12(%ebp)
-	.loc 3 64 0
+	.loc 3 66 0
 	movl	-12(%ebp), %eax
 	movl	%eax, (%esp)
 	call	sched_make_runnable
-.L23:
+.L24:
 .LBE2:
-	.loc 3 62 0
+	.loc 3 64 0
 	movl	8(%ebp), %eax
 	movl	8(%eax), %eax
 	testl	%eax, %eax
-	jne	.L24
-	.loc 3 66 0
+	jne	.L25
+	.loc 3 68 0
 	nop
 	leave
 	.cfi_restore 5
@@ -1141,7 +1145,7 @@ sched_broadcast_on:
 	.byte	0x1
 	.long	.LASF614
 	.byte	0x3
-	.byte	0x3b
+	.byte	0x3d
 	.byte	0x1
 	.long	.LFB13
 	.long	.LFE13
@@ -1152,7 +1156,7 @@ sched_broadcast_on:
 	.uleb128 0x12
 	.string	"q"
 	.byte	0x3
-	.byte	0x3b
+	.byte	0x3d
 	.long	0x337
 	.byte	0x2
 	.byte	0x91
@@ -1163,7 +1167,7 @@ sched_broadcast_on:
 	.uleb128 0x17
 	.string	"kt"
 	.byte	0x3
-	.byte	0x3f
+	.byte	0x41
 	.long	0x5db
 	.byte	0x2
 	.byte	0x91
@@ -1683,7 +1687,7 @@ sched_broadcast_on:
 	.byte	0x4
 	.byte	0x4
 	.byte	0
-	.section	.debug_macro,"G",@progbits,wm4.0.f58455ebbae40e9c27150abda75859a9,comdat
+	.section	.debug_macro,"G",@progbits,wm4.0.a7a1b0b43574f9561a0adbf1f7092a2e,comdat
 .Ldebug_macro1:
 	.value	0x4
 	.byte	0
@@ -3406,6 +3410,8 @@ sched_broadcast_on:
 	.string	"__GNUC_MINOR__ 4"
 .LASF268:
 	.string	"PD_WRITE 0x002"
+.LASF207:
+	.string	"__GCC_HAVE_DWARF2_CFI_ASM 1"
 .LASF37:
 	.string	"__CHAR32_TYPE__ unsigned int"
 .LASF534:
@@ -3692,8 +3698,6 @@ sched_broadcast_on:
 	.string	"__INTMAX_MAX__ 0x7fffffffffffffffLL"
 .LASF494:
 	.string	"DBG_BRK DBG_MODE(18)"
-.LASF236:
-	.string	"CS402TESTS 10"
 .LASF408:
 	.string	"ENOTCONN 107"
 .LASF487:
@@ -3988,8 +3992,8 @@ sched_broadcast_on:
 	.string	"vmm_list"
 .LASF96:
 	.string	"__INT16_C(c) c"
-.LASF207:
-	.string	"__GCC_HAVE_DWARF2_CFI_ASM 1"
+.LASF238:
+	.string	"GDBWAIT 1"
 .LASF92:
 	.string	"__UINT64_MAX__ 0xffffffffffffffffULL"
 .LASF613:
@@ -4218,8 +4222,6 @@ sched_broadcast_on:
 	.string	"__INT8_TYPE__ signed char"
 .LASF75:
 	.string	"__WINT_MAX__ 0xffffffffU"
-.LASF238:
-	.string	"GDBWAIT 0"
 .LASF430:
 	.string	"EKEYREJECTED 129"
 .LASF401:
@@ -4388,6 +4390,8 @@ sched_broadcast_on:
 	.string	"ELIBBAD 80"
 .LASF311:
 	.string	"ECHILD 10"
+.LASF236:
+	.string	"CS402TESTS 1"
 .LASF375:
 	.string	"EBADMSG 74"
 .LASF51:

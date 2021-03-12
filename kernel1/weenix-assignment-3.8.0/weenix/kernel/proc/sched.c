@@ -119,13 +119,17 @@ int
 sched_cancellable_sleep_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
+        if(curthr->kt_cancelled==1){
+                return -EINTR;
+        }
         ktqueue_enqueue(q, curthr);
         curthr->kt_state = KT_SLEEP_CANCELLABLE;
         sched_switch();
         if(curthr->kt_cancelled==1){
-                kthread_exit(curthr->kt_retval);
+                return -EINTR;
+        }else{
+                return 0;
         }
-        return 0;
 }
 
 /*
@@ -144,6 +148,9 @@ sched_cancel(struct kthread *kthr)
         kthr->kt_cancelled =1;
         if(kthr->kt_state == KT_SLEEP_CANCELLABLE){
                 if(kthr->kt_wchan!=&(kt_runq)){
+                        list_remove(&(kthr->kt_qlink));
+                        kthr->kt_wchan->tq_size--;
+                        kthr->kt_wchan = NULL;
                         sched_make_runnable(kthr);
                 }    
         }
@@ -229,6 +236,7 @@ sched_make_runnable(kthread_t *thr)
         intr_setipl(IPL_HIGH);
         ktqueue_enqueue(&kt_runq, thr);
         thr->kt_state = KT_SLEEP;
+        thr->kt_wchan = &kt_runq;
         intr_setipl(oldIPL);
 }
 
