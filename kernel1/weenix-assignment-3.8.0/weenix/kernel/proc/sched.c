@@ -120,14 +120,17 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
         if(curthr->kt_cancelled==1){
+                dbg(DBG_PRINT,"(GRADING1A)\n");
                 return -EINTR;
         }
         ktqueue_enqueue(q, curthr);
         curthr->kt_state = KT_SLEEP_CANCELLABLE;
         sched_switch();
         if(curthr->kt_cancelled==1){
+                dbg(DBG_PRINT,"(GRADING1A)\n");
                 return -EINTR;
         }else{
+                dbg(DBG_PRINT,"(GRADING1A)\n");
                 return 0;
         }
 }
@@ -152,8 +155,10 @@ sched_cancel(struct kthread *kthr)
                         kthr->kt_wchan->tq_size--;
                         kthr->kt_wchan = NULL;
                         sched_make_runnable(kthr);
+                    dbg(DBG_PRINT, "(GRADING1C)\n");
                 }    
         }
+    dbg(DBG_PRINT, "(GRADING1C)\n");
 }
 
 /*
@@ -212,6 +217,7 @@ sched_switch(void)
         curproc = curthr->kt_proc;
         context_switch(&(old_thread->kt_ctx), &(curthr->kt_ctx));
         intr_setipl(oldIPL);
+        dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 
 /*
@@ -238,5 +244,6 @@ sched_make_runnable(kthread_t *thr)
         thr->kt_state = KT_SLEEP;
         thr->kt_wchan = &kt_runq;
         intr_setipl(oldIPL);
+        dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 

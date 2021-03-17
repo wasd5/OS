@@ -301,6 +301,9 @@ void
 proc_cleanup(int status)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
+        KASSERT(NULL != proc_initproc);
+        KASSERT(1 <= curproc->p_pid);
+        KASSERT(NULL != curproc->p_pproc);
         dbg(DBG_PRINT,"(GRADING1A)\n");
         if(curproc->p_pid == 1){
                 while(!list_empty(&(curproc->p_children))){
@@ -319,6 +322,8 @@ proc_cleanup(int status)
                 dbg(DBG_PRINT,"(GRADING1A)\n");
                 dbg(DBG_PRINT,"(GRADING1C)\n");
         }
+        KASSERT(NULL != curproc->p_pproc);
+        KASSERT(KT_EXITED == curthr->kt_state);
         curproc->p_state = PROC_DEAD;
         curproc->p_status = status;
         sched_wakeup_on(&(curproc->p_pproc->p_wait));
@@ -358,7 +363,21 @@ proc_kill(proc_t *p, int status)
 void
 proc_kill_all()
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
+        //NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
+            proc_t* child;
+            list_iterate_begin(&_proc_list, child, proc_t, p_list_link) {
+                if (child->p_pid!=PID_IDLE && child->p_pproc->p_pid != PID_IDLE && child != curproc)
+                {
+                        proc_kill(child, child->p_status);
+                        dbg(DBG_PRINT, "(GRADING1C)\n");
+                }
+                dbg(DBG_PRINT, "(GRADING1C)\n");
+            } list_iterate_end();
+        
+            if (curproc->p_pproc && curproc->p_pproc->p_pid != PID_IDLE){
+                proc_kill(curproc, 0);
+                dbg(DBG_PRINT, "(GRADING1C)\n");
+            }
 }
 
 /*

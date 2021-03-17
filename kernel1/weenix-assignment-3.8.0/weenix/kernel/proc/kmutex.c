@@ -33,7 +33,23 @@
 void
 kmutex_init(kmutex_t *mtx)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
+        //NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
+        KASSERT(curthr && (curthr != mtx->km_holder));
+        dbg(DBG_PRINT, "(GRADING1A 6.b)\n");
+        int tmp =0;
+        if(mtx->km_holder!=NULL){
+                tmp = sched_cancellable_sleep_on(&(mtx->km_waitq));
+                if(tmp){
+                    dbg(DBG_PRINT, "(GRADING1C)\n");
+                    return tmp;
+                    }
+            }else{
+                    mtx->km_holder = curthr;
+                    dbg(DBG_PRINT, "(GRADING1C)\n");
+                    return 0;
+            }
+        dbg(DBG_PRINT, "(GRADING1C)\n");
+        return 0;
 }
 
 /*
@@ -45,7 +61,17 @@ kmutex_init(kmutex_t *mtx)
 void
 kmutex_lock(kmutex_t *mtx)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock");
+        //NOT_YET_IMPLEMENTED("PROCS: kmutex_lock");
+        KASSERT(curthr && (curthr != mtx->km_holder));
+        dbg(DBG_PRINT, "(GRADING1A 6.a)\n");
+        if(mtx->km_holder != NULL) {
+            sched_sleep_on(&(mtx->km_waitq));
+                    dbg(DBG_PRINT, "(GRADING1C)\n");
+        } else {
+                    mtx->km_holder = curthr;
+                    dbg(DBG_PRINT, "(GRADING1C)\n");
+        }
+            dbg(DBG_PRINT, "(GRADING1C)\n");
 }
 
 /*
@@ -55,7 +81,21 @@ kmutex_lock(kmutex_t *mtx)
 int
 kmutex_lock_cancellable(kmutex_t *mtx)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock_cancellable");
+            KASSERT(curthr && (curthr != mtx->km_holder));
+            dbg(DBG_PRINT, "(GRADING1A 6.b)\n");
+            int tmp =0;
+            if(mtx->km_holder!=NULL){
+                    tmp = sched_cancellable_sleep_on(&(mtx->km_waitq));
+                    if(tmp){
+                    dbg(DBG_PRINT, "(GRADING1C)\n");
+                        return tmp;
+                    }
+            }else{
+                    mtx->km_holder = curthr;
+                    dbg(DBG_PRINT, "(GRADING1C)\n");
+                    return 0;
+            }
+        dbg(DBG_PRINT, "(GRADING1C)\n");
         return 0;
 }
 
@@ -75,5 +115,10 @@ kmutex_lock_cancellable(kmutex_t *mtx)
 void
 kmutex_unlock(kmutex_t *mtx)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_unlock");
+        KASSERT(curthr && (curthr == mtx->km_holder));
+        dbg(DBG_PRINT, "(GRADING1A 6.c)\n");
+        mtx->km_holder = sched_wakeup_on(&(mtx->km_waitq));
+        dbg(DBG_PRINT, "(GRADING1C)\n");
+        KASSERT(curthr != mtx->km_holder);
+        dbg(DBG_PRINT, "(GRADING1A 6.c)\n");
 }

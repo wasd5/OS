@@ -54,6 +54,7 @@ sched_wakeup_on(ktqueue_t *q)
         if(kt != NULL){
                 sched_make_runnable(kt);
         }
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         return kt;
 }
 
@@ -64,6 +65,8 @@ sched_broadcast_on(ktqueue_t *q)
         while(q->tq_size!=0){
                 kthread_t *kt = ktqueue_dequeue(q);
                 sched_make_runnable(kt);
+                dbg(DBG_PRINT, "(GRADING1C)\n");
         }
+    dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 
