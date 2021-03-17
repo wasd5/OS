@@ -229,15 +229,19 @@ proc_create(char *name)
         //assign p_pid for idle_proc or init_proc or other
         if(next_pid == PID_IDLE){
                 p->p_pid = PID_IDLE;
+                dbg(DBG_PRINT, "(GRADING1A)\n");
         }else if(next_pid == PID_INIT){
                 p->p_pid = PID_INIT;
                 proc_initproc = p;
+                dbg(DBG_PRINT, "(GRADING1A)\n");
         }else{
                 p->p_pid = next_pid;
+                dbg(DBG_PRINT, "(GRADING1A)\n");
         }
-
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         //assign p_comm
         strcpy(p->p_comm, name);
+        p->p_comm[strlen(name)] = '\0'; 
         //p_threads
         list_init(&(p->p_threads));
         //p_children
@@ -247,9 +251,11 @@ proc_create(char *name)
                 p->p_pproc = curproc;
                 list_link_init(&(p->p_child_link));
                 list_insert_tail(&(curproc->p_children), &(p->p_child_link));
+                dbg(DBG_PRINT, "(GRADING1A)\n");
         }else{
                 p->p_pproc = NULL;
                 list_link_init(&(p->p_child_link));
+                dbg(DBG_PRINT, "(GRADING1A)\n");
         }   
         //p_status
         p->p_status = 0;
@@ -263,7 +269,7 @@ proc_create(char *name)
         list_link_init(&(p->p_list_link));
         list_insert_tail(&_proc_list, &(p->p_list_link));
         //p_child_link in assign parent child relationship
-        
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         return p;
 }
 
@@ -295,10 +301,12 @@ void
 proc_cleanup(int status)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
+        dbg(DBG_PRINT,"(GRADING1A)\n");
         if(curproc->p_pid == 1){
                 while(!list_empty(&(curproc->p_children))){
                         do_waitpid(-1, 0 ,&status);
                 }
+                dbg(DBG_PRINT,"(GRADING1A)\n");
                 
         }else{
                 //reparenting
@@ -308,11 +316,13 @@ proc_cleanup(int status)
                         list_insert_tail(&(proc_initproc->p_children),&(p->p_child_link));
                         p->p_pproc = proc_initproc;
                 } list_iterate_end();
+                dbg(DBG_PRINT,"(GRADING1A)\n");
+                dbg(DBG_PRINT,"(GRADING1C)\n");
         }
         curproc->p_state = PROC_DEAD;
         curproc->p_status = status;
         sched_wakeup_on(&(curproc->p_pproc->p_wait));
-        
+        dbg(DBG_PRINT,"(GRADING1A)\n");
 }
 
 /*
@@ -326,7 +336,17 @@ proc_cleanup(int status)
 void
 proc_kill(proc_t *p, int status)
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_kill");
+        //NOT_YET_IMPLEMENTED("PROCS: proc_kill");
+        if (curproc == p)  { // calling on current proc
+            dbg(DBG_PRINT, "(GRADING1C)\n");
+            do_exit(status);
+        }
+        // cancel all children
+        kthread_t* children;
+        list_iterate_begin(&(p->p_threads), children, kthread_t, kt_plink) {
+            kthread_cancel(children, (void*)status);
+        }list_iterate_end();
+        dbg(DBG_PRINT, "(GRADING1C)\n");
 }
 
 /*
@@ -354,6 +374,7 @@ proc_thread_exited(void *retval)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
         proc_cleanup(curproc->p_status);
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         sched_switch();
 }
 

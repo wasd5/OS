@@ -79,6 +79,8 @@ static context_t bootstrap_context;
 extern int gdb_wait;
 
 extern void *faber_thread_test(int, void*);
+extern void *sunghan_test(int, void*);
+extern void *sunghan_deadlock_test(int, void*);
 
 /**
  * This is the first real C function ever called. It performs a lot of
@@ -187,8 +189,13 @@ bootstrap(int arg1, void *arg2)
         //NOT_YET_IMPLEMENTED("PROCS: bootstrap");
         proc_t *p = proc_create("idle");
         curproc = p;
+        KASSERT(curproc && curproc->p_pid == 0);
+        // exit test
+        dbg(DBG_PRINT, "(GRADING1A)\n"); 
         kthread_t *kt = kthread_create(p, idleproc_run, arg1, arg2);
         curthr = kt;
+        KASSERT(curthr);
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         context_make_active(&(kt->kt_ctx));
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
@@ -285,7 +292,11 @@ initproc_create(void)
 {
         //NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         proc_t *p = proc_create("init");
+        KASSERT(p && p->p_pid == 1);
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         kthread_t *kt = kthread_create(p, initproc_run, NULL, NULL);
+        KASSERT(kt);
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         return kt;
 }
 
@@ -305,8 +316,52 @@ static void *
 initproc_run(int arg1, void *arg2)
 {
         //NOT_YET_IMPLEMENTED("PROCS: initproc_run");
-        proc_t *p = proc_create("faber test");
-        kthread_t *kt = kthread_create(p,faber_thread_test,arg1,arg2);
+
+        // create a thread that runs faber_thread_test
+        proc_t *p = proc_create("faber test", faber_thread_test_func, NULL, NULL);
+        kthread_t *kt = kthread_create(p, faber_thread_test_func, arg1, arg2);
         sched_make_runnable(kt);
+        #ifdef __DRIVERS__
+            kshell_add_command("faber", my_faber_thread_test, "Run faber_thread_test().");
+            kshell_add_command("sunghan", my_sunghan_test, "Run sunghan_test().");
+            kshell_add_command("deadlock", my_sunghan_deadlock_test, "Run sunghan_deadlock_test().");
+            kshell_t *ks = kshell_create(0);
+            while(kshell_execute_next(ks));
+            kshell_destroy(ks);
         return NULL;
+}
+
+int faber_thread_test_func() 
+{
+
+}
+
+int my_faber_thread_test(kshell_t *ks, int arg1, char **arg2)
+{
+    int status = -1;
+    proc_t* p = proc_create("faber_thread_test");
+    kthread_t* kt = kthread_create(proc, faber_thread_test, 0, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &status);
+    return 0;
+
+}
+
+int my_sunghan_test(kshell_t *ks, int arg1, char **arg2)
+{
+    int status = -1;
+    proc_t* p = proc_create("sunghan_test");
+    kthread_t* kt = kthread_create(proc, sunghan_test, 0, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &status);
+    return 0;
+}
+int my_sunghan_deadlock_test(kshell_t *ks, int arg1, char **arg2)
+{
+    int status = -1;
+    proc_t* p = proc_create("sunghan_deadlock_test");
+    kthread_t* kt = kthread_create(proc, sunghan_deadlock_test, 0, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &status);
+    return 0;
 }
