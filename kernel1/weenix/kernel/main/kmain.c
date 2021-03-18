@@ -293,7 +293,7 @@ int my_sunghan_test(kshell_t *ks, int arg1, char **arg2)
 {
     int exitstatus = -1;
     proc_t* p = proc_create("sunghan_test");
-    kthread_t* kt = kthread_create(proc, sunghan_test, 0, NULL);
+    kthread_t* kt = kthread_create(p, sunghan_test, 0, NULL);
     sched_make_runnable(kt);
     do_waitpid(p->p_pid, 0, &exitstatus);
     return 0;
@@ -302,7 +302,7 @@ int my_sunghan_deadlock_test(kshell_t *ks, int arg1, char **arg2)
 {
     int exitstatus = -1;
     proc_t* p = proc_create("sunghan_deadlock_test");
-    kthread_t* kt = kthread_create(proc, sunghan_deadlock_test, 0, NULL);
+    kthread_t* kt = kthread_create(p, sunghan_deadlock_test, 0, NULL);
     sched_make_runnable(kt);
     do_waitpid(p->p_pid, 0, &exitstatus);
     return 0;
