@@ -41,7 +41,7 @@
 
 # Set which CS402 tests are to run.  Valid from 0 (no tests except running init)
 # to 10 (run all tests plus student tests).
-        CS402TESTS=7
+        CS402TESTS=10
 
 # Currently, CS402INITCHOICE is not used in the kernel.  You can use it for
 # anything you want (mainly to select which way to go in initproc_run()).
@@ -63,7 +63,7 @@
 # changed at runtime by modifying the dbg_modes global variable.
 #
 # All debug statements
-        DBG=all
+        DBG=error,test
 # Change to this for no debug statements
 #       DBG=-all
 # Change to this to select all the "General" and "VFS" stuff in "kernel/include/util/debug.h"
