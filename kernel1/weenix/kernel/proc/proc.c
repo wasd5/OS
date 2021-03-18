@@ -227,7 +227,7 @@ proc_create(char *name)
 
         int next_pid = _proc_getid();
         KASSERT(PID_IDLE != next_pid || list_empty(&_proc_list));
-        dbg(DBG_PRINT, "(GRADING1A)\n");
+        dbg(DBG_PRINT, "(GRADING1A 2.a)\n");
         //assign p_pid for idle_proc or init_proc or other
         KASSERT(PID_INIT != next_pid || PID_IDLE == curproc->p_pid);
         // if(next_pid == PID_IDLE){
@@ -253,11 +253,11 @@ proc_create(char *name)
                 p->p_pproc = curproc;
                 list_link_init(&(p->p_child_link));
                 list_insert_tail(&(curproc->p_children), &(p->p_child_link));
-                dbg(DBG_PRINT, "(GRADING1A)\n");
+                dbg(DBG_PRINT, "(GRADING1C)\n");
         }else{
                 p->p_pproc = NULL;
                 list_link_init(&(p->p_child_link));
-                dbg(DBG_PRINT, "(GRADING1A)\n");
+                dbg(DBG_PRINT, "(GRADING1C)\n");
         }
         
         dbg(DBG_PRINT, "(GRADING1A)\n");
@@ -273,7 +273,7 @@ proc_create(char *name)
         list_link_init(&(p->p_list_link));
         list_insert_tail(&_proc_list, &(p->p_list_link));
         //p_child_link in assign parent child relationship
-        dbg(DBG_PRINT, "(GRADING1A)\n");
+        dbg(DBG_PRINT, "(GRADING1C)\n");
         return p;
 }
 
@@ -306,9 +306,14 @@ proc_cleanup(int status)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
         KASSERT(NULL != proc_initproc);
+        dbg(DBG_PRINT,"(GRADING1A 2.b)\n");
         KASSERT(1 <= curproc->p_pid);
+        dbg(DBG_PRINT,"(GRADING1A 2.b)\n");
         KASSERT(NULL != curproc->p_pproc);
-        dbg(DBG_PRINT,"(GRADING1A)\n");
+        dbg(DBG_PRINT,"(GRADING1A 2.b)\n");
+
+
+        
         if(curproc->p_pid == 1){
                 while(!list_empty(&(curproc->p_children))){
                         do_waitpid(-1, 0 ,&status);

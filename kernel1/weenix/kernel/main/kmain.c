@@ -190,12 +190,14 @@ bootstrap(int arg1, void *arg2)
         proc_t *p = proc_create("idle");
         curproc = p;
         KASSERT(NULL != curproc);
+        dbg(DBG_PRINT, "(GRADING1A 1.a)\n");
         KASSERT(PID_IDLE == curproc->p_pid);
         // exit test
-        dbg(DBG_PRINT, "(GRADING1A)\n"); 
+        dbg(DBG_PRINT, "(GRADING1A 1.a)\n"); 
         kthread_t *kt = kthread_create(p, idleproc_run, arg1, arg2);
         curthr = kt;
         KASSERT(NULL != curthr);
+        dbg(DBG_PRINT, "(GRADING1A 1.a)\n");
         dbg(DBG_PRINT, "(GRADING1A)\n");
         context_make_active(&(kt->kt_ctx));
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
@@ -324,10 +326,12 @@ initproc_create(void)
         //NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         proc_t *p = proc_create("init");
         KASSERT(NULL != p);
+        dbg(DBG_PRINT, "(GRADING1A 1.b)\n");
         KASSERT(PID_INIT == p->p_pid);
-        dbg(DBG_PRINT, "(GRADING1A)\n");
+        dbg(DBG_PRINT, "(GRADING1A 1.b)\n");
         kthread_t* kt = kthread_create(p, initproc_run, 0, NULL);
         KASSERT(NULL != kt);
+        dbg(DBG_PRINT, "(GRADING1A 1.b)\n");
         dbg(DBG_PRINT, "(GRADING1A)\n");
         return kt;
 }
