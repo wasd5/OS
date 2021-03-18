@@ -48,7 +48,7 @@ init_func(sched_init);
 void
 ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
 {
-        KASSERT(!thr->kt_wchan);
+        //KASSERT(!thr->kt_wchan);
         list_insert_head(&q->tq_list, &thr->kt_qlink);
         thr->kt_wchan = q;
         q->tq_size++;
