@@ -226,22 +226,24 @@ proc_create(char *name)
         //memset(p, 0, sizeof(proc_t));
 
         int next_pid = _proc_getid();
+        KASSERT(PID_IDLE != next_pid || list_empty(&_proc_list));
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         //assign p_pid for idle_proc or init_proc or other
-        if(next_pid == PID_IDLE){
-                p->p_pid = PID_IDLE;
-                dbg(DBG_PRINT, "(GRADING1A)\n");
-        }else if(next_pid == PID_INIT){
-                p->p_pid = PID_INIT;
-                proc_initproc = p;
-                dbg(DBG_PRINT, "(GRADING1A)\n");
-        }else{
+        KASSERT(PID_INIT != next_pid || PID_IDLE == curproc->p_pid);
+        // if(next_pid == PID_IDLE){
+        //         p->p_pid = PID_IDLE;
+        //         dbg(DBG_PRINT, "(GRADING1A)\n");
+        // }else if(next_pid == PID_INIT){
+        //         p->p_pid = PID_INIT;
+        //         proc_initproc = p;
+        //         dbg(DBG_PRINT, "(GRADING1A)\n");
+        // }else{
                 p->p_pid = next_pid;
                 dbg(DBG_PRINT, "(GRADING1A)\n");
-        }
-        dbg(DBG_PRINT, "(GRADING1A)\n");
+        //}
         //assign p_comm
+        memset(p->p_comm, '\0', sizeof(p->p_comm));
         strcpy(p->p_comm, name);
-        p->p_comm[strlen(name)] = '\0'; 
         //p_threads
         list_init(&(p->p_threads));
         //p_children
@@ -256,7 +258,9 @@ proc_create(char *name)
                 p->p_pproc = NULL;
                 list_link_init(&(p->p_child_link));
                 dbg(DBG_PRINT, "(GRADING1A)\n");
-        }   
+        }
+        
+        dbg(DBG_PRINT, "(GRADING1A)\n");
         //p_status
         p->p_status = 0;
         //p_stats
@@ -324,10 +328,10 @@ proc_cleanup(int status)
         }
         KASSERT(NULL != curproc->p_pproc);
         KASSERT(KT_EXITED == curthr->kt_state);
+        dbg(DBG_PRINT,"(GRADING1A)\n");
         curproc->p_state = PROC_DEAD;
         curproc->p_status = status;
         sched_wakeup_on(&(curproc->p_pproc->p_wait));
-        dbg(DBG_PRINT,"(GRADING1A)\n");
 }
 
 /*
@@ -346,11 +350,14 @@ proc_kill(proc_t *p, int status)
             dbg(DBG_PRINT, "(GRADING1C)\n");
             do_exit(status);
         }
-        // cancel all children
+        // cancel all children threads
         kthread_t* children;
         list_iterate_begin(&(p->p_threads), children, kthread_t, kt_plink) {
             kthread_cancel(children, (void*)status);
         }list_iterate_end();
+        // whwh
+        p->p_state=PROC_DEAD;
+        p->p_status=status;
         dbg(DBG_PRINT, "(GRADING1C)\n");
 }
 
@@ -363,21 +370,21 @@ proc_kill(proc_t *p, int status)
 void
 proc_kill_all()
 {
-        //NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
-            proc_t* child;
-            list_iterate_begin(&_proc_list, child, proc_t, p_list_link) {
-                if (child->p_pid!=PID_IDLE && child->p_pproc->p_pid != PID_IDLE && child != curproc)
-                {
-                        proc_kill(child, child->p_status);
-                        dbg(DBG_PRINT, "(GRADING1C)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING1C)\n");
-            } list_iterate_end();
-        
-            if (curproc->p_pproc && curproc->p_pproc->p_pid != PID_IDLE){
-                proc_kill(curproc, 0);
-                dbg(DBG_PRINT, "(GRADING1C)\n");
-            }
+    //NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
+    // kill children then itself
+    proc_t* child;
+    list_iterate_begin(&_proc_list, child, proc_t, p_list_link) {
+        if (child != curproc && child->p_pid != PID_IDLE && child->p_pproc->p_pid != PID_IDLE) {
+            proc_kill(child, child->p_status);
+            dbg(DBG_PRINT, "(GRADING1C)\n");
+        }
+        dbg(DBG_PRINT, "(GRADING1C)\n");
+    } list_iterate_end();
+
+    if (curproc->p_pproc != PID_INIT && curproc->p_pproc != PID_DILE && curproc->p_pproc->p_pid != PID_IDLE) {
+        proc_kill(curproc, 0);
+        dbg(DBG_PRINT, "(GRADING1C)\n");
+    }
 }
 
 /*
@@ -487,8 +494,13 @@ do_waitpid(pid_t pid, int options, int *status)
                 page_free(wait_p->p_pagedir);
                 //free p with allocator
                 slab_obj_free(proc_allocator, wait_p);
+                KASSERT(NULL != p); /* must have found a dead child process */
+                KASSERT(-1 == pid || p->p_pid == pid); /* if the pid argument is not -1, then pid must be the process ID of the found dead child process */
+                KASSERT(NULL != p->p_pagedir); /* this process should have a valid pagedir before you destroy it */
+                dbg(DBG_PRINT,"(GRADING1C)\n");  
                 return pid;
         }
+        dbg(DBG_PRINT,"(GRADING1C)\n");  
         return -1;
 }
 
@@ -501,7 +513,10 @@ do_waitpid(pid_t pid, int options, int *status)
 void
 do_exit(int status)
 {
-        //NOT_YET_IMPLEMENTED("PROCS: do_exit");
-        curproc->p_status = status;
-        kthread_exit(curthr->kt_retval);
+    //NOT_YET_IMPLEMENTED("PROCS: do_exit");
+
+    // this is single thread thus no need for list interate
+    curproc->p_status = status;
+    kthread_exit(curthr->kt_retval);
+    dbg(DBG_PRINT, "(GRADING1C)\n");
 }

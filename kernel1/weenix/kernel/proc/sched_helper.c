@@ -41,32 +41,34 @@ void
 sched_sleep_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");
-        ktqueue_enqueue(q, curthr);
-        curthr->kt_state = KT_SLEEP;
-        sched_switch();
+    curthr->kt_state = KT_SLEEP;
+    ktqueue_enqueue(q, curthr);    
+    sched_switch();
 }
 
 kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
-        //NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
-        kthread_t *kt = ktqueue_dequeue(q);
-        if(kt != NULL){
-                sched_make_runnable(kt);
-        }
+    //NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
+    kthread_t *kt = ktqueue_dequeue(q);
+    KASSERT((kt->kt_state == KT_SLEEP) || (kt->kt_state == KT_SLEEP_CANCELLABLE)); /* thr must be in either one of these two states */
+    dbg(DBG_PRINT, "(GRADING1A)\n");
+    if(kt != NULL) {
+        sched_make_runnable(kt);
         dbg(DBG_PRINT, "(GRADING1A)\n");
-        return kt;
+    }
+    return kt;
 }
 
 void
 sched_broadcast_on(ktqueue_t *q)
 {
-        //NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");
-        while(q->tq_size!=0){
-                kthread_t *kt = ktqueue_dequeue(q);
-                sched_make_runnable(kt);
-                dbg(DBG_PRINT, "(GRADING1C)\n");
-        }
+    //NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");
+    while(q->tq_size != 0){
+        kthread_t *kt = ktqueue_dequeue(q);
+        sched_make_runnable(kt);
+        dbg(DBG_PRINT, "(GRADING1C)\n");
+    }
     dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 

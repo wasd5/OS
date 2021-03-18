@@ -189,12 +189,13 @@ bootstrap(int arg1, void *arg2)
         //NOT_YET_IMPLEMENTED("PROCS: bootstrap");
         proc_t *p = proc_create("idle");
         curproc = p;
-        KASSERT(curproc && curproc->p_pid == 0);
+        KASSERT(NULL != curproc);
+        KASSERT(PID_IDLE == curproc->p_pid);
         // exit test
         dbg(DBG_PRINT, "(GRADING1A)\n"); 
         kthread_t *kt = kthread_create(p, idleproc_run, arg1, arg2);
         curthr = kt;
-        KASSERT(curthr);
+        KASSERT(NULL != curthr);
         dbg(DBG_PRINT, "(GRADING1A)\n");
         context_make_active(&(kt->kt_ctx));
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
@@ -293,46 +294,13 @@ initproc_create(void)
         //NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         proc_t *p = proc_create("init");
         KASSERT(NULL != p);
-        KASSERT(p && p->p_pid == 1);
+        KASSERT(PID_INIT == p->p_pid);
         dbg(DBG_PRINT, "(GRADING1A)\n");
-        kthread_t *kt = kthread_create(p, initproc_run, 0, NULL);
+        kthread_t kt = kthread_create(p, initproc_run, 0, NULL);
         KASSERT(NULL != kt);
         dbg(DBG_PRINT, "(GRADING1A)\n");
         return kt;
 }
-
-#ifdef __DRIVERS__
-int my_faber_thread_test(int arg1, char **arg2)
-{
-    
-    int status;
-    proc_t *p = proc_create("faber_thread_test");
-    kthread_t *kt = kthread_create(p, faber_thread_test, 0, NULL);
-    sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &status);
-    return 0;
-
-}
-
-int my_sunghan_test(kshell_t *kshell, int arg1, char **arg2)
-{
-    int status;
-    proc_t *p = proc_create("sunghan_test");
-    kthread_t *kt=kthread_create(p, sunghan_test, 0, NULL);
-    sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &status);
-    return 0;
-}
-int my_sunghan_deadlock_test(kshell_t *kshell, int arg1, char **arg2)
-{
-    int status;
-    proc_t *p = proc_create("sunghan_deadlock_test");
-    kthread_t *kt=kthread_create(p, sunghan_deadlock_test, 0, NULL);
-    sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &status);
-    return 0;
-}
-#endif
 
 /**
  * The init thread's function changes depending on how far along your Weenix is
@@ -351,56 +319,47 @@ initproc_run(int arg1, void *arg2)
         //NOT_YET_IMPLEMENTED("PROCS: initproc_run");
 
         // create a thread that runs faber_thread_test
-        proc_t *p = proc_create("faber_thread_test");//, my_faber_thread_test, NULL, NULL);
-        kthread_t *kt = kthread_create(p, faber_thread_test, arg1, arg2);
-        sched_make_runnable(kt);
-        return NULL;
-        /*#ifdef __DRIVERS__
+        // proc_t *p = proc_create("faber_thread_test");//, my_faber_thread_test, NULL, NULL);
+        // kthread_t *kt = kthread_create(p, faber_thread_test, arg1, arg2);
+        // sched_make_runnable(kt);
+        // return NULL;
+        #ifdef __DRIVERS__  // run test processes and threads in terminal
             kshell_add_command("faber", my_faber_thread_test, "Run faber_thread_test().");
             kshell_add_command("sunghan", my_sunghan_test, "Run sunghan_test().");
             kshell_add_command("deadlock", my_sunghan_deadlock_test, "Run sunghan_deadlock_test().");
             kshell_t *ks = kshell_create(0);
-            if (!ks) panic ("init: Couldn't create kernel shell\n");
             while(kshell_execute_next(ks));
             kshell_destroy(ks);
         #endif
         return NULL;
-        */
 }
 
-/*int faber_thread_test_func() 
+int my_faber_thread_test(kshell_t *ks, int arg1, char **arg2)
 {
-
-}
-*/
-
-/*int my_faber_thread_test(kshell_t *ks, int arg1, char **arg2)
-{
-    int status = -1;
+    int exitstatus = -1;
     proc_t* p = proc_create("faber_thread_test");
     kthread_t* kt = kthread_create(p, faber_thread_test, 0, NULL);
     sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &status);
+    do_waitpid(p->p_pid, 0, &exitstatus);
     return 0;
 
 }
 
 int my_sunghan_test(kshell_t *ks, int arg1, char **arg2)
 {
-    int status = -1;
+    int exitstatus = -1;
     proc_t* p = proc_create("sunghan_test");
     kthread_t* kt = kthread_create(proc, sunghan_test, 0, NULL);
     sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &status);
+    do_waitpid(p->p_pid, 0, &exitstatus);
     return 0;
 }
 int my_sunghan_deadlock_test(kshell_t *ks, int arg1, char **arg2)
 {
-    int status = -1;
+    int exitstatus = -1;
     proc_t* p = proc_create("sunghan_deadlock_test");
     kthread_t* kt = kthread_create(proc, sunghan_deadlock_test, 0, NULL);
     sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &status);
+    do_waitpid(p->p_pid, 0, &exitstatus);
     return 0;
 }
-*/
