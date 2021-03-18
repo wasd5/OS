@@ -278,6 +278,36 @@ idleproc_run(int arg1, void *arg2)
         return NULL;
 }
 
+int my_faber_thread_test(kshell_t *ks, int arg1, char **arg2)
+{
+    int exitstatus = -1;
+    proc_t* p = proc_create("faber_thread_test");
+    kthread_t* kt = kthread_create(p, faber_thread_test, 0, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &exitstatus);
+    return 0;
+
+}
+
+int my_sunghan_test(kshell_t *ks, int arg1, char **arg2)
+{
+    int exitstatus = -1;
+    proc_t* p = proc_create("sunghan_test");
+    kthread_t* kt = kthread_create(proc, sunghan_test, 0, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &exitstatus);
+    return 0;
+}
+int my_sunghan_deadlock_test(kshell_t *ks, int arg1, char **arg2)
+{
+    int exitstatus = -1;
+    proc_t* p = proc_create("sunghan_deadlock_test");
+    kthread_t* kt = kthread_create(proc, sunghan_deadlock_test, 0, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &exitstatus);
+    return 0;
+}
+
 /**
  * This function, called by the idle process (within 'idleproc_run'), creates the
  * process commonly refered to as the "init" process, which should have PID 1.
@@ -296,7 +326,7 @@ initproc_create(void)
         KASSERT(NULL != p);
         KASSERT(PID_INIT == p->p_pid);
         dbg(DBG_PRINT, "(GRADING1A)\n");
-        kthread_t kt = kthread_create(p, initproc_run, 0, NULL);
+        kthread_t* kt = kthread_create(p, initproc_run, 0, NULL);
         KASSERT(NULL != kt);
         dbg(DBG_PRINT, "(GRADING1A)\n");
         return kt;
@@ -332,34 +362,4 @@ initproc_run(int arg1, void *arg2)
             kshell_destroy(ks);
         #endif
         return NULL;
-}
-
-int my_faber_thread_test(kshell_t *ks, int arg1, char **arg2)
-{
-    int exitstatus = -1;
-    proc_t* p = proc_create("faber_thread_test");
-    kthread_t* kt = kthread_create(p, faber_thread_test, 0, NULL);
-    sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &exitstatus);
-    return 0;
-
-}
-
-int my_sunghan_test(kshell_t *ks, int arg1, char **arg2)
-{
-    int exitstatus = -1;
-    proc_t* p = proc_create("sunghan_test");
-    kthread_t* kt = kthread_create(proc, sunghan_test, 0, NULL);
-    sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &exitstatus);
-    return 0;
-}
-int my_sunghan_deadlock_test(kshell_t *ks, int arg1, char **arg2)
-{
-    int exitstatus = -1;
-    proc_t* p = proc_create("sunghan_deadlock_test");
-    kthread_t* kt = kthread_create(proc, sunghan_deadlock_test, 0, NULL);
-    sched_make_runnable(kt);
-    do_waitpid(p->p_pid, 0, &exitstatus);
-    return 0;
 }
