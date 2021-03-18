@@ -34,22 +34,9 @@ void
 kmutex_init(kmutex_t *mtx)
 {
         //NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
-        KASSERT(curthr && (curthr != mtx->km_holder));
-        dbg(DBG_PRINT, "(GRADING1A 6.b)\n");
-        int tmp =0;
-        if(mtx->km_holder!=NULL){
-                tmp = sched_cancellable_sleep_on(&(mtx->km_waitq));
-                if(tmp){
-                    dbg(DBG_PRINT, "(GRADING1C)\n");
-                    return tmp;
-                    }
-            }else{
-                    mtx->km_holder = curthr;
-                    dbg(DBG_PRINT, "(GRADING1C)\n");
-                    return 0;
-            }
-        dbg(DBG_PRINT, "(GRADING1C)\n");
-        return 0;
+        sched_queue_init(&(mtx->km_waitq));
+        mtx->km_holder = NULL;
+        dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 
 /*
