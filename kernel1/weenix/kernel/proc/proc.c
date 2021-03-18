@@ -381,7 +381,7 @@ proc_kill_all()
         dbg(DBG_PRINT, "(GRADING1C)\n");
     } list_iterate_end();
 
-    if (curproc->p_pproc->pid != PID_INIT && curproc->p_pproc->pid != PID_IDLE && curproc->p_pproc->p_pid != PID_IDLE) {
+    if (curproc->p_pproc->p_pid != PID_INIT && curproc->p_pproc->p_pid != PID_IDLE && curproc->p_pproc->p_pid != PID_IDLE) {
         proc_kill(curproc, 0);
         dbg(DBG_PRINT, "(GRADING1C)\n");
     }
