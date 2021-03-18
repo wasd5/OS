@@ -242,6 +242,9 @@ sched_make_runnable(kthread_t *thr)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
         //intr_disable();
+        if(&kt_runq == thr->kt_wchan) {
+            return ;
+        }
         KASSERT(&kt_runq != thr->kt_wchan);  /* the thr argument must not be a thread that's already in the runq */
         dbg(DBG_PRINT, "(GRADING1A)\n");
         int original = intr_getipl();
