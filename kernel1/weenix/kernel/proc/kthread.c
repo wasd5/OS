@@ -106,6 +106,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
         //NOT_YET_IMPLEMENTED("PROCS: kthread_create");
         KASSERT(NULL != p);
         dbg(DBG_PRINT, "(GRADING1A)\n");
+
         kthread_t *kt = (kthread_t *)slab_obj_alloc(kthread_allocator);
         //memset(kt, 0, sizeof(kthread_t));
         //kt_kstack
@@ -152,16 +153,16 @@ kthread_cancel(kthread_t *kthr, void *retval)
 {
         //NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");
         KASSERT(NULL != kthr);
-        dbg(DBG_PRINT, "(GRADING1A)\n");
+        dbg(DBG_PRINT, "(GRADING1A 3.b)\n");
+        dbg(DBG_PRINT, "(GRADING1C)\n");
+        
         if(kthr == curthr){
                 kthread_exit(retval);
-                dbg(DBG_PRINT, "(GRADING1C)\n");
-        }
-        else{
+        }else{
                 kthr->kt_retval = retval;
                 sched_cancel(kthr);
-                dbg(DBG_PRINT, "(GRADING1C)\n");
         }
+        dbg(DBG_PRINT, "(GRADING1C)\n");
 }
 
 /*
@@ -187,11 +188,12 @@ kthread_exit(void *retval)
         KASSERT(!curthr->kt_wchan);
         KASSERT(!curthr->kt_qlink.l_next && !curthr->kt_qlink.l_prev);
         KASSERT(curthr->kt_proc == curproc);
-        dbg(DBG_PRINT, "(GRADING1A)\n");
+        dbg(DBG_PRINT, "(GRADING1A 3.c)\n");
 
         curthr->kt_retval = retval;
         curthr->kt_state = KT_EXITED;
         proc_thread_exited(retval);
+
         dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 

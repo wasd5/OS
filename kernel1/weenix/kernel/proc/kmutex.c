@@ -37,6 +37,7 @@ kmutex_init(kmutex_t *mtx)
         list_init(&(mtx->km_waitq.tq_list));
         mtx->km_waitq.tq_size = 0;
         mtx->km_holder = NULL;
+
         dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 
@@ -76,19 +77,14 @@ kmutex_lock_cancellable(kmutex_t *mtx)
         dbg(DBG_PRINT, "(GRADING1C)\n");
 
         if(mtx->km_holder != NULL) {
-	    int tmp = sched_cancellable_sleep_on(&(mtx->km_waitq));
-
-            if(tmp == -EINTR) { // cancelled
-                dbg(DBG_PRINT, "(GRADING1C)\n");
+	       int tmp = sched_cancellable_sleep_on(&(mtx->km_waitq));
+            if(tmp == -EINTR) { // cancelled  
                 return -EINTR;
-            }else{
-		dbg(DBG_PRINT, "(GRADING1C)\n");		
-	    }
+            }		
         }else { 
             mtx->km_holder = curthr;
-            dbg(DBG_PRINT, "(GRADING1C)\n");
         }
-        
+         dbg(DBG_PRINT, "(GRADING1C)\n");
         return 0;
 }
 
@@ -112,17 +108,9 @@ kmutex_unlock(kmutex_t *mtx)
     KASSERT(curthr && (curthr == mtx->km_holder));
     dbg(DBG_PRINT, "(GRADING1A 6.c)\n");
 
+    mtx->km_holder = sched_wakeup_on(&(mtx->km_waitq));
+    dbg(DBG_PRINT, "(GRADING1C)\n");
 
-     if (!sched_queue_empty(&mtx->km_waitq)) {
-            mtx->km_holder = sched_wakeup_on(&(mtx->km_waitq));
-            dbg(DBG_PRINT, "(GRADING1C)\n");
-        } else {
-            mtx->km_holder = NULL;
-            dbg(DBG_PRINT, "(GRADING1A)\n");
-        }
-
-
-    /* on return, curthr must not be the mutex (mtx) holder */
     KASSERT(curthr != mtx->km_holder);
     dbg(DBG_PRINT, "(GRADING1A 6.c)\n");
 }

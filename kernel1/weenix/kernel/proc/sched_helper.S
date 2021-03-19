@@ -284,38 +284,33 @@ sched_sleep_on:
 	.cfi_def_cfa_register 5
 	pushl	%esi
 	pushl	%ebx
-	subl	$32, %esp
+	subl	$16, %esp
 	.cfi_offset 6, -12
 	.cfi_offset 3, -16
 	.loc 3 44 0
-	movl	curthr, %eax
-	movl	$2, 48(%eax)
-	.loc 3 45 0
 	movl	curthr, %eax
 	movl	%eax, 4(%esp)
 	movl	8(%ebp), %eax
 	movl	%eax, (%esp)
 	call	ktqueue_enqueue
+	.loc 3 45 0
+	movl	curthr, %eax
+	movl	$2, 48(%eax)
 	.loc 3 46 0
-	jmp	.L20
-.L21:
-	.loc 3 47 0
 	call	sched_switch
 	.loc 3 48 0
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
 	andl	$16777216, %ecx
-	movl	%ecx, -16(%ebp)
+	movl	%ecx, %ebx
 	movl	%edx, %eax
 	andl	$0, %eax
-	movl	%eax, -12(%ebp)
-	movl	-16(%ebp), %edx
-	movl	-12(%ebp), %ecx
-	movl	%ecx, %eax
-	orl	%edx, %eax
+	movl	%eax, %esi
+	movl	%esi, %eax
+	orl	%ebx, %eax
 	testl	%eax, %eax
-	je	.L20
+	je	.L21
 	.loc 3 48 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
@@ -333,13 +328,50 @@ sched_sleep_on:
 	movl	$.LC4, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-.L20:
-	.loc 3 46 0 is_stmt 1
-	movl	curthr, %eax
-	movl	48(%eax), %eax
-	cmpl	$2, %eax
-	je	.L21
-	.loc 3 50 0
+.L21:
+	.loc 3 49 0 is_stmt 1
+	nop
+	addl	$16, %esp
+	popl	%ebx
+	.cfi_restore 3
+	popl	%esi
+	.cfi_restore 6
+	popl	%ebp
+	.cfi_restore 5
+	.cfi_def_cfa 4, 4
+	ret
+	.cfi_endproc
+.LFE11:
+	.size	sched_sleep_on, .-sched_sleep_on
+	.globl	sched_wakeup_on
+	.type	sched_wakeup_on, @function
+sched_wakeup_on:
+.LFB12:
+	.loc 3 53 0
+	.cfi_startproc
+	pushl	%ebp
+	.cfi_def_cfa_offset 8
+	.cfi_offset 5, -8
+	movl	%esp, %ebp
+	.cfi_def_cfa_register 5
+	pushl	%esi
+	pushl	%ebx
+	subl	$32, %esp
+	.cfi_offset 6, -12
+	.cfi_offset 3, -16
+	.loc 3 55 0
+	movl	8(%ebp), %eax
+	movl	%eax, (%esp)
+	call	ktqueue_dequeue
+	movl	%eax, -12(%ebp)
+	.loc 3 56 0
+	cmpl	$0, -12(%ebp)
+	je	.L23
+	.loc 3 57 0
+	movl	-12(%ebp), %eax
+	movl	%eax, (%esp)
+	call	sched_make_runnable
+	.loc 3 58 0
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
@@ -352,15 +384,15 @@ sched_sleep_on:
 	orl	%ebx, %eax
 	testl	%eax, %eax
 	je	.L23
-	.loc 3 50 0 is_stmt 0 discriminator 1
+	.loc 3 58 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
 	movl	%eax, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-	movl	$__func__.1390, 12(%esp)
-	movl	$50, 8(%esp)
+	movl	$__func__.1395, 12(%esp)
+	movl	$58, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -370,187 +402,10 @@ sched_sleep_on:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 .L23:
-	.loc 3 51 0 is_stmt 1
-	nop
-	addl	$32, %esp
-	popl	%ebx
-	.cfi_restore 3
-	popl	%esi
-	.cfi_restore 6
-	popl	%ebp
-	.cfi_restore 5
-	.cfi_def_cfa 4, 4
-	ret
-	.cfi_endproc
-.LFE11:
-	.size	sched_sleep_on, .-sched_sleep_on
-	.section	.rodata
-.LC5:
-	.string	"(GRADING1C)\n"
-	.align 4
-.LC6:
-	.string	"(kt->kt_state == KT_SLEEP) || (kt->kt_state == KT_SLEEP_CANCELLABLE)"
-.LC7:
-	.string	"assertion failed: %s"
-	.text
-	.globl	sched_wakeup_on
-	.type	sched_wakeup_on, @function
-sched_wakeup_on:
-.LFB12:
-	.loc 3 55 0
-	.cfi_startproc
-	pushl	%ebp
-	.cfi_def_cfa_offset 8
-	.cfi_offset 5, -8
-	movl	%esp, %ebp
-	.cfi_def_cfa_register 5
-	pushl	%esi
-	pushl	%ebx
-	subl	$64, %esp
-	.cfi_offset 6, -12
-	.cfi_offset 3, -16
-	.loc 3 57 0
-	movl	8(%ebp), %eax
-	movl	%eax, (%esp)
-	call	sched_queue_empty
-	testl	%eax, %eax
-	je	.L25
-	.loc 3 58 0
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -32(%ebp)
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, -28(%ebp)
-	movl	-32(%ebp), %edx
-	movl	-28(%ebp), %ecx
-	movl	%ecx, %eax
-	orl	%edx, %eax
-	testl	%eax, %eax
-	je	.L26
-	.loc 3 58 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1397, 12(%esp)
-	movl	$58, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC5, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-.L26:
-	.loc 3 59 0 is_stmt 1
-	movl	$0, %eax
-	jmp	.L27
-.L25:
-	.loc 3 61 0
-	movl	8(%ebp), %eax
-	movl	%eax, (%esp)
-	call	ktqueue_dequeue
-	movl	%eax, -12(%ebp)
+	.loc 3 60 0 is_stmt 1
+	movl	-12(%ebp), %eax
 	.loc 3 62 0
-	movl	-12(%ebp), %eax
-	movl	48(%eax), %eax
-	cmpl	$2, %eax
-	je	.L28
-	.loc 3 62 0 is_stmt 0 discriminator 1
-	movl	-12(%ebp), %eax
-	movl	48(%eax), %eax
-	cmpl	$3, %eax
-	je	.L28
-	.loc 3 62 0 discriminator 2
-	movl	$.LC6, 16(%esp)
-	movl	$.LC7, 12(%esp)
-	movl	$__func__.1397, 8(%esp)
-	movl	$62, 4(%esp)
-	movl	$.LC1, (%esp)
-	call	dbg_panic
-.L28:
-	.loc 3 63 0 is_stmt 1
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %ecx
-	andl	$16777216, %ecx
-	movl	%ecx, -40(%ebp)
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, -36(%ebp)
-	movl	-40(%ebp), %edx
-	movl	-36(%ebp), %ecx
-	movl	%ecx, %eax
-	orl	%edx, %eax
-	testl	%eax, %eax
-	je	.L29
-	.loc 3 63 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1397, 12(%esp)
-	movl	$63, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC3, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-.L29:
-	.loc 3 65 0 is_stmt 1
-	cmpl	$0, -12(%ebp)
-	je	.L30
-	.loc 3 66 0
-	movl	-12(%ebp), %eax
-	movl	%eax, (%esp)
-	call	sched_make_runnable
-	.loc 3 67 0
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %ecx
-	andl	$16777216, %ecx
-	movl	%ecx, %ebx
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, %esi
-	movl	%esi, %eax
-	orl	%ebx, %eax
-	testl	%eax, %eax
-	je	.L30
-	.loc 3 67 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1397, 12(%esp)
-	movl	$67, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC3, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-.L30:
-	.loc 3 69 0 is_stmt 1
-	movl	-12(%ebp), %eax
-.L27:
-	.loc 3 70 0
-	addl	$64, %esp
+	addl	$32, %esp
 	popl	%ebx
 	.cfi_restore 3
 	popl	%esi
@@ -562,11 +417,15 @@ sched_wakeup_on:
 	.cfi_endproc
 .LFE12:
 	.size	sched_wakeup_on, .-sched_wakeup_on
+	.section	.rodata
+.LC5:
+	.string	"(GRADING1C)\n"
+	.text
 	.globl	sched_broadcast_on
 	.type	sched_broadcast_on, @function
 sched_broadcast_on:
 .LFB13:
-	.loc 3 74 0
+	.loc 3 66 0
 	.cfi_startproc
 	pushl	%ebp
 	.cfi_def_cfa_offset 8
@@ -578,20 +437,20 @@ sched_broadcast_on:
 	subl	$48, %esp
 	.cfi_offset 6, -12
 	.cfi_offset 3, -16
-	.loc 3 76 0
-	jmp	.L32
-.L33:
+	.loc 3 68 0
+	jmp	.L26
+.L27:
 .LBB2:
-	.loc 3 77 0
+	.loc 3 69 0
 	movl	8(%ebp), %eax
 	movl	%eax, (%esp)
 	call	ktqueue_dequeue
 	movl	%eax, -12(%ebp)
-	.loc 3 78 0
+	.loc 3 70 0
 	movl	-12(%ebp), %eax
 	movl	%eax, (%esp)
 	call	sched_make_runnable
-	.loc 3 79 0
+	.loc 3 71 0
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
@@ -605,16 +464,16 @@ sched_broadcast_on:
 	movl	%ecx, %eax
 	orl	%edx, %eax
 	testl	%eax, %eax
-	je	.L32
-	.loc 3 79 0 is_stmt 0 discriminator 1
+	je	.L26
+	.loc 3 71 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
 	movl	%eax, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-	movl	$__func__.1403, 12(%esp)
-	movl	$79, 8(%esp)
+	movl	$__func__.1400, 12(%esp)
+	movl	$71, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -623,14 +482,14 @@ sched_broadcast_on:
 	movl	$.LC4, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-.L32:
+.L26:
 .LBE2:
-	.loc 3 76 0 is_stmt 1
+	.loc 3 68 0 is_stmt 1
 	movl	8(%ebp), %eax
 	movl	8(%eax), %eax
 	testl	%eax, %eax
-	jne	.L33
-	.loc 3 81 0
+	jne	.L27
+	.loc 3 73 0
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
@@ -642,16 +501,16 @@ sched_broadcast_on:
 	movl	%esi, %eax
 	orl	%ebx, %eax
 	testl	%eax, %eax
-	je	.L35
-	.loc 3 81 0 is_stmt 0 discriminator 1
+	je	.L29
+	.loc 3 73 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
 	movl	%eax, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-	movl	$__func__.1403, 12(%esp)
-	movl	$81, 8(%esp)
+	movl	$__func__.1400, 12(%esp)
+	movl	$73, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -660,8 +519,8 @@ sched_broadcast_on:
 	movl	$.LC4, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-.L35:
-	.loc 3 82 0 is_stmt 1
+.L29:
+	.loc 3 74 0 is_stmt 1
 	nop
 	addl	$48, %esp
 	popl	%ebx
@@ -682,14 +541,14 @@ sched_broadcast_on:
 __func__.1390:
 	.string	"sched_sleep_on"
 	.align 4
-	.type	__func__.1397, @object
-	.size	__func__.1397, 16
-__func__.1397:
+	.type	__func__.1395, @object
+	.size	__func__.1395, 16
+__func__.1395:
 	.string	"sched_wakeup_on"
 	.align 4
-	.type	__func__.1403, @object
-	.size	__func__.1403, 19
-__func__.1403:
+	.type	__func__.1400, @object
+	.size	__func__.1400, 19
+__func__.1400:
 	.string	"sched_broadcast_on"
 	.text
 .Letext0:
@@ -1460,7 +1319,7 @@ __func__.1403:
 	.byte	0x1
 	.long	.LASF625
 	.byte	0x3
-	.byte	0x36
+	.byte	0x34
 	.byte	0x1
 	.long	0x620
 	.long	.LFB12
@@ -1472,26 +1331,26 @@ __func__.1403:
 	.uleb128 0x12
 	.string	"q"
 	.byte	0x3
-	.byte	0x36
+	.byte	0x34
 	.long	0x342
 	.byte	0x2
 	.byte	0x91
 	.sleb128 0
+	.uleb128 0x19
+	.string	"kt"
+	.byte	0x3
+	.byte	0x37
+	.long	0x620
+	.byte	0x2
+	.byte	0x91
+	.sleb128 -20
 	.uleb128 0x16
 	.long	.LASF615
 	.long	0x636
 	.byte	0x1
 	.byte	0x5
 	.byte	0x3
-	.long	__func__.1397
-	.uleb128 0x19
-	.string	"kt"
-	.byte	0x3
-	.byte	0x3d
-	.long	0x620
-	.byte	0x2
-	.byte	0x91
-	.sleb128 -20
+	.long	__func__.1395
 	.byte	0
 	.uleb128 0x7
 	.byte	0x4
@@ -1509,7 +1368,7 @@ __func__.1403:
 	.byte	0x1
 	.long	.LASF617
 	.byte	0x3
-	.byte	0x49
+	.byte	0x41
 	.byte	0x1
 	.long	.LFB13
 	.long	.LFE13
@@ -1520,7 +1379,7 @@ __func__.1403:
 	.uleb128 0x12
 	.string	"q"
 	.byte	0x3
-	.byte	0x49
+	.byte	0x41
 	.long	0x342
 	.byte	0x2
 	.byte	0x91
@@ -1531,14 +1390,14 @@ __func__.1403:
 	.byte	0x1
 	.byte	0x5
 	.byte	0x3
-	.long	__func__.1403
+	.long	__func__.1400
 	.uleb128 0x1a
 	.long	.LBB2
 	.long	.LBE2
 	.uleb128 0x19
 	.string	"kt"
 	.byte	0x3
-	.byte	0x4d
+	.byte	0x45
 	.long	0x620
 	.byte	0x2
 	.byte	0x91

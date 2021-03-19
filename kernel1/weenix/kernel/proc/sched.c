@@ -119,11 +119,6 @@ int
 sched_cancellable_sleep_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
-        // if(curthr->kt_cancelled == 1) {
-        //     // cancelled
-        //     dbg(DBG_PRINT,"(GRADING1A)\n");
-        //     return -EINTR;
-        // }
         if(curthr->kt_cancelled == 1){
             dbg(DBG_PRINT,"(GRADING1C)\n");
             return -EINTR;
@@ -135,8 +130,8 @@ sched_cancellable_sleep_on(ktqueue_t *q)
             dbg(DBG_PRINT,"(GRADING1C)\n");
             return -EINTR;
         }
-            dbg(DBG_PRINT,"(GRADING1A)\n");
-            return 0;
+        dbg(DBG_PRINT,"(GRADING1A)\n");
+        return 0;
         
 }
 
@@ -154,15 +149,14 @@ sched_cancel(struct kthread *kthr)
 {
     //NOT_YET_IMPLEMENTED("PROCS: sched_cancel");
     kthr->kt_cancelled = 1;
+    kthr->kt_cancelled =1;
     if(kthr->kt_state == KT_SLEEP_CANCELLABLE){
-      //  if(kthr->kt_wchan!=&(kt_runq) || 1) { // ???
-            // list_remove(&(kthr->kt_qlink));
-            // kthr->kt_wchan->tq_size--;
-            // kthr->kt_wchan = NULL;
-            ktqueue_remove(kthr->kt_wchan, kthr);
+        if(kthr->kt_wchan!=&(kt_runq)){
+            list_remove(&(kthr->kt_qlink));
+            kthr->kt_wchan->tq_size--;
+            kthr->kt_wchan = NULL;
             sched_make_runnable(kthr);
-            dbg(DBG_PRINT, "(GRADING1C)\n");
-       // }
+        }    
     }
     dbg(DBG_PRINT, "(GRADING1C)\n");
 }
@@ -207,29 +201,28 @@ void
 sched_switch(void)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_switch");
-        int original = intr_getipl();
+        kthread_t *old_thread;
+        int oldIPL;
+        oldIPL = intr_getipl();
         intr_setipl(IPL_HIGH);
         while(sched_queue_empty(&kt_runq)){
-            // reenable
-            intr_setipl(IPL_LOW);
-            intr_wait();
-            //need halt cpu fix when deal with kernel3
-            intr_setipl(IPL_HIGH);
+                intr_setipl(IPL_LOW);
+                //need halt cpu fix when deal with kernel3
+                intr_setipl(IPL_HIGH);
         }
-        kthread_t* original_thread = curthr;
+        old_thread = curthr;
         curthr = ktqueue_dequeue(&kt_runq);
         //old_thread->kt_state = KT_SLEEP;
         curthr->kt_state = KT_RUN;
         curproc = curthr->kt_proc;
-        context_switch(&(original_thread->kt_ctx), &(curthr->kt_ctx));
-        intr_setipl(original);
+        context_switch(&(old_thread->kt_ctx), &(curthr->kt_ctx));
+        intr_setipl(oldIPL);
         dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 
 /*
  * Since we are modifying the run queue, we _MUST_ set the IPL to high
  * so that no interrupts happen at an inopportune moment.
-
  * Remember to restore the original IPL before you return from this
  * function. Otherwise, we will not get any interrupts after returning
  * from this function.
@@ -244,18 +237,13 @@ sched_make_runnable(kthread_t *thr)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
         //intr_disable();
-        // if(&kt_runq == thr->kt_wchan) {
-        //     return ;
-        // }
-        // KASSERT(&kt_runq != thr->kt_wchan);   //the thr argument must not be a thread that's already in the runq 
-        // dbg(DBG_PRINT, "(GRADING1A)\n");
-        int original = intr_getipl();
-        // set ipl to high
+        KASSERT(&kt_runq != thr->kt_wchan);  
+        dbg(DBG_PRINT, "(GRADING1A)\n");
+        
+        int oldIPL = intr_getipl();
         intr_setipl(IPL_HIGH);
+        ktqueue_enqueue(&kt_runq, thr);
         thr->kt_state = KT_SLEEP;
         thr->kt_wchan = &kt_runq;
-        ktqueue_enqueue(&kt_runq, thr);
-        intr_setipl(original);
-        dbg(DBG_PRINT, "(GRADING1A)\n");
+        intr_setipl(oldIPL);
 }
-

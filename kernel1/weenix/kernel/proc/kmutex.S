@@ -177,7 +177,7 @@ kmutex_init:
 	.loc 2 39 0
 	movl	8(%ebp), %ecx
 	movl	$0, 12(%ecx)
-	.loc 2 40 0
+	.loc 2 41 0
 	movl	dbg_modes, %ecx
 	movl	dbg_modes+4, %ebx
 	movl	%ecx, %esi
@@ -189,7 +189,7 @@ kmutex_init:
 	orl	%edx, %eax
 	testl	%eax, %eax
 	je	.L15
-	.loc 2 40 0 is_stmt 0 discriminator 1
+	.loc 2 41 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
@@ -197,7 +197,7 @@ kmutex_init:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 	movl	$__func__.1343, 12(%esp)
-	movl	$40, 8(%esp)
+	movl	$41, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -207,7 +207,7 @@ kmutex_init:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 .L15:
-	.loc 2 41 0 is_stmt 1
+	.loc 2 42 0 is_stmt 1
 	nop
 	addl	$16, %esp
 	popl	%ebx
@@ -236,7 +236,7 @@ kmutex_init:
 	.type	kmutex_lock, @function
 kmutex_lock:
 .LFB7:
-	.loc 2 51 0
+	.loc 2 52 0
 	.cfi_startproc
 	pushl	%ebp
 	.cfi_def_cfa_offset 8
@@ -248,26 +248,26 @@ kmutex_lock:
 	subl	$48, %esp
 	.cfi_offset 6, -12
 	.cfi_offset 3, -16
-	.loc 2 53 0
+	.loc 2 54 0
 	movl	curthr, %eax
 	testl	%eax, %eax
 	je	.L17
-	.loc 2 53 0 is_stmt 0 discriminator 2
+	.loc 2 54 0 is_stmt 0 discriminator 2
 	movl	8(%ebp), %eax
 	movl	12(%eax), %edx
 	movl	curthr, %eax
 	cmpl	%eax, %edx
 	jne	.L18
 .L17:
-	.loc 2 53 0 discriminator 3
+	.loc 2 54 0 discriminator 3
 	movl	$.LC5, 16(%esp)
 	movl	$.LC6, 12(%esp)
 	movl	$__func__.1347, 8(%esp)
-	movl	$53, 4(%esp)
+	movl	$54, 4(%esp)
 	movl	$.LC1, (%esp)
 	call	dbg_panic
 .L18:
-	.loc 2 54 0 is_stmt 1
+	.loc 2 55 0 is_stmt 1
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
@@ -282,7 +282,7 @@ kmutex_lock:
 	orl	%edx, %eax
 	testl	%eax, %eax
 	je	.L19
-	.loc 2 54 0 is_stmt 0 discriminator 1
+	.loc 2 55 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
@@ -290,7 +290,7 @@ kmutex_lock:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 	movl	$__func__.1347, 12(%esp)
-	movl	$54, 8(%esp)
+	movl	$55, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -300,16 +300,16 @@ kmutex_lock:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 .L19:
-	.loc 2 57 0 is_stmt 1
+	.loc 2 58 0 is_stmt 1
 	movl	8(%ebp), %eax
 	movl	12(%eax), %eax
 	testl	%eax, %eax
 	je	.L20
-	.loc 2 58 0
+	.loc 2 59 0
 	movl	8(%ebp), %eax
 	movl	%eax, (%esp)
 	call	sched_sleep_on
-	.loc 2 59 0
+	.loc 2 60 0
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %esi
@@ -324,7 +324,7 @@ kmutex_lock:
 	orl	%ecx, %eax
 	testl	%eax, %eax
 	je	.L23
-	.loc 2 59 0 is_stmt 0 discriminator 1
+	.loc 2 60 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
@@ -332,7 +332,7 @@ kmutex_lock:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 	movl	$__func__.1347, 12(%esp)
-	movl	$59, 8(%esp)
+	movl	$60, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -341,14 +341,14 @@ kmutex_lock:
 	movl	$.LC4, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-	.loc 2 65 0 is_stmt 1 discriminator 1
+	.loc 2 66 0 is_stmt 1 discriminator 1
 	jmp	.L23
 .L20:
-	.loc 2 62 0
+	.loc 2 63 0
 	movl	curthr, %edx
 	movl	8(%ebp), %eax
 	movl	%edx, 12(%eax)
-	.loc 2 63 0
+	.loc 2 64 0
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
@@ -361,7 +361,7 @@ kmutex_lock:
 	orl	%ebx, %eax
 	testl	%eax, %eax
 	je	.L23
-	.loc 2 63 0 is_stmt 0 discriminator 1
+	.loc 2 64 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
@@ -369,7 +369,7 @@ kmutex_lock:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 	movl	$__func__.1347, 12(%esp)
-	movl	$63, 8(%esp)
+	movl	$64, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -379,7 +379,7 @@ kmutex_lock:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 .L23:
-	.loc 2 65 0 is_stmt 1
+	.loc 2 66 0 is_stmt 1
 	nop
 	addl	$48, %esp
 	popl	%ebx
@@ -401,7 +401,7 @@ kmutex_lock:
 	.type	kmutex_lock_cancellable, @function
 kmutex_lock_cancellable:
 .LFB8:
-	.loc 2 73 0
+	.loc 2 74 0
 	.cfi_startproc
 	pushl	%ebp
 	.cfi_def_cfa_offset 8
@@ -410,74 +410,43 @@ kmutex_lock_cancellable:
 	.cfi_def_cfa_register 5
 	pushl	%esi
 	pushl	%ebx
-	subl	$80, %esp
+	subl	$64, %esp
 	.cfi_offset 6, -12
 	.cfi_offset 3, -16
-	.loc 2 74 0
+	.loc 2 75 0
 	movl	curthr, %eax
 	testl	%eax, %eax
 	je	.L25
-	.loc 2 74 0 is_stmt 0 discriminator 2
+	.loc 2 75 0 is_stmt 0 discriminator 2
 	movl	8(%ebp), %eax
 	movl	12(%eax), %edx
 	movl	curthr, %eax
 	cmpl	%eax, %edx
 	jne	.L26
 .L25:
-	.loc 2 74 0 discriminator 3
+	.loc 2 75 0 discriminator 3
 	movl	$.LC5, 16(%esp)
 	movl	$.LC6, 12(%esp)
 	movl	$__func__.1351, 8(%esp)
-	movl	$74, 4(%esp)
+	movl	$75, 4(%esp)
 	movl	$.LC1, (%esp)
 	call	dbg_panic
 .L26:
-	.loc 2 75 0 is_stmt 1
+	.loc 2 76 0 is_stmt 1
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
 	andl	$16777216, %ecx
-	movl	%ecx, %ebx
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, %esi
-	movl	%esi, %eax
-	orl	%ebx, %eax
-	testl	%eax, %eax
-	je	.L27
-	.loc 2 75 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1351, 12(%esp)
-	movl	$75, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC9, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-.L27:
-	.loc 2 76 0 is_stmt 1
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -32(%ebp)
+	movl	%ecx, -32(%ebp)
 	movl	%edx, %eax
 	andl	$0, %eax
 	movl	%eax, -28(%ebp)
-	movl	-32(%ebp), %ecx
-	movl	-28(%ebp), %ebx
-	movl	%ebx, %eax
-	orl	%ecx, %eax
+	movl	-32(%ebp), %edx
+	movl	-28(%ebp), %ecx
+	movl	%ecx, %eax
+	orl	%edx, %eax
 	testl	%eax, %eax
-	je	.L28
+	je	.L27
 	.loc 2 76 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
@@ -490,118 +459,83 @@ kmutex_lock_cancellable:
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
+	movl	$.LC9, (%esp)
+	call	dbg_print
+	movl	$.LC4, 4(%esp)
+	movl	$.LC0, (%esp)
+	call	dbg_print
+.L27:
+	.loc 2 77 0 is_stmt 1
+	movl	dbg_modes, %eax
+	movl	dbg_modes+4, %edx
+	movl	%eax, %ecx
+	andl	$16777216, %ecx
+	movl	%ecx, -40(%ebp)
+	movl	%edx, %eax
+	andl	$0, %eax
+	movl	%eax, -36(%ebp)
+	movl	-40(%ebp), %edx
+	movl	-36(%ebp), %ecx
+	movl	%ecx, %eax
+	orl	%edx, %eax
+	testl	%eax, %eax
+	je	.L28
+	.loc 2 77 0 is_stmt 0 discriminator 1
+	movl	$16777216, (%esp)
+	movl	$0, 4(%esp)
+	call	dbg_color
+	movl	%eax, 4(%esp)
+	movl	$.LC0, (%esp)
+	call	dbg_print
+	movl	$__func__.1351, 12(%esp)
+	movl	$77, 8(%esp)
+	movl	$.LC1, 4(%esp)
+	movl	$.LC2, (%esp)
+	call	dbg_print
 	movl	$.LC8, (%esp)
 	call	dbg_print
 	movl	$.LC4, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
 .L28:
-	.loc 2 78 0 is_stmt 1
+	.loc 2 79 0 is_stmt 1
 	movl	8(%ebp), %eax
 	movl	12(%eax), %eax
 	testl	%eax, %eax
 	je	.L29
 .LBB2:
-	.loc 2 79 0
+	.loc 2 80 0
 	movl	8(%ebp), %eax
 	movl	%eax, (%esp)
 	call	sched_cancellable_sleep_on
 	movl	%eax, -12(%ebp)
 	.loc 2 81 0
 	cmpl	$-4, -12(%ebp)
-	jne	.L30
+	jne	.L32
 	.loc 2 82 0
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -40(%ebp)
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, -36(%ebp)
-	movl	-40(%ebp), %ecx
-	movl	-36(%ebp), %ebx
-	movl	%ebx, %eax
-	orl	%ecx, %eax
-	testl	%eax, %eax
-	je	.L31
-	.loc 2 82 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1351, 12(%esp)
-	movl	$82, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC8, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-.L31:
-	.loc 2 83 0 is_stmt 1
 	movl	$-4, %eax
-	jmp	.L32
-.L30:
-	.loc 2 85 0
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -48(%ebp)
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, -44(%ebp)
-	movl	-48(%ebp), %edx
-	movl	-44(%ebp), %ecx
-	movl	%ecx, %eax
-	orl	%edx, %eax
-	testl	%eax, %eax
-	je	.L34
-	.loc 2 85 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1351, 12(%esp)
-	movl	$85, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC8, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	jmp	.L34
+	jmp	.L31
 .L29:
 .LBE2:
-	.loc 2 88 0 is_stmt 1
+	.loc 2 85 0
 	movl	curthr, %edx
 	movl	8(%ebp), %eax
 	movl	%edx, 12(%eax)
-	.loc 2 89 0
+.L32:
+	.loc 2 87 0
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -56(%ebp)
+	movl	%eax, %ecx
+	andl	$16777216, %ecx
+	movl	%ecx, %ebx
 	movl	%edx, %eax
 	andl	$0, %eax
-	movl	%eax, -52(%ebp)
-	movl	-56(%ebp), %edx
-	movl	-52(%ebp), %ecx
-	movl	%ecx, %eax
-	orl	%edx, %eax
+	movl	%eax, %esi
+	movl	%esi, %eax
+	orl	%ebx, %eax
 	testl	%eax, %eax
-	je	.L34
-	.loc 2 89 0 is_stmt 0 discriminator 1
+	je	.L33
+	.loc 2 87 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
@@ -609,7 +543,7 @@ kmutex_lock_cancellable:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 	movl	$__func__.1351, 12(%esp)
-	movl	$89, 8(%esp)
+	movl	$87, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
@@ -618,12 +552,12 @@ kmutex_lock_cancellable:
 	movl	$.LC4, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
-.L34:
-	.loc 2 92 0 is_stmt 1
+.L33:
+	.loc 2 88 0 is_stmt 1
 	movl	$0, %eax
-.L32:
-	.loc 2 93 0
-	addl	$80, %esp
+.L31:
+	.loc 2 89 0
+	addl	$64, %esp
 	popl	%ebx
 	.cfi_restore 3
 	popl	%esi
@@ -648,7 +582,7 @@ kmutex_lock_cancellable:
 	.type	kmutex_unlock, @function
 kmutex_unlock:
 .LFB9:
-	.loc 2 110 0
+	.loc 2 106 0
 	.cfi_startproc
 	pushl	%ebp
 	.cfi_def_cfa_offset 8
@@ -657,29 +591,116 @@ kmutex_unlock:
 	.cfi_def_cfa_register 5
 	pushl	%esi
 	pushl	%ebx
-	subl	$64, %esp
+	subl	$48, %esp
 	.cfi_offset 6, -12
 	.cfi_offset 3, -16
-	.loc 2 112 0
+	.loc 2 108 0
 	movl	curthr, %eax
 	testl	%eax, %eax
-	je	.L36
-	.loc 2 112 0 is_stmt 0 discriminator 2
+	je	.L35
+	.loc 2 108 0 is_stmt 0 discriminator 2
 	movl	8(%ebp), %eax
 	movl	12(%eax), %edx
 	movl	curthr, %eax
 	cmpl	%eax, %edx
-	je	.L37
-.L36:
-	.loc 2 112 0 discriminator 3
+	je	.L36
+.L35:
+	.loc 2 108 0 discriminator 3
 	movl	$.LC10, 16(%esp)
 	movl	$.LC6, 12(%esp)
 	movl	$__func__.1356, 8(%esp)
-	movl	$112, 4(%esp)
+	movl	$108, 4(%esp)
 	movl	$.LC1, (%esp)
 	call	dbg_panic
+.L36:
+	.loc 2 109 0 is_stmt 1
+	movl	dbg_modes, %eax
+	movl	dbg_modes+4, %edx
+	movl	%eax, %ecx
+	andl	$16777216, %ecx
+	movl	%ecx, -16(%ebp)
+	movl	%edx, %eax
+	andl	$0, %eax
+	movl	%eax, -12(%ebp)
+	movl	-16(%ebp), %edx
+	movl	-12(%ebp), %ecx
+	movl	%ecx, %eax
+	orl	%edx, %eax
+	testl	%eax, %eax
+	je	.L37
+	.loc 2 109 0 is_stmt 0 discriminator 1
+	movl	$16777216, (%esp)
+	movl	$0, 4(%esp)
+	call	dbg_color
+	movl	%eax, 4(%esp)
+	movl	$.LC0, (%esp)
+	call	dbg_print
+	movl	$__func__.1356, 12(%esp)
+	movl	$109, 8(%esp)
+	movl	$.LC1, 4(%esp)
+	movl	$.LC2, (%esp)
+	call	dbg_print
+	movl	$.LC11, (%esp)
+	call	dbg_print
+	movl	$.LC4, 4(%esp)
+	movl	$.LC0, (%esp)
+	call	dbg_print
 .L37:
-	.loc 2 113 0 is_stmt 1
+	.loc 2 111 0 is_stmt 1
+	movl	8(%ebp), %eax
+	movl	%eax, (%esp)
+	call	sched_wakeup_on
+	movl	%eax, %edx
+	movl	8(%ebp), %eax
+	movl	%edx, 12(%eax)
+	.loc 2 112 0
+	movl	dbg_modes, %eax
+	movl	dbg_modes+4, %edx
+	movl	%eax, %ecx
+	andl	$16777216, %ecx
+	movl	%ecx, -24(%ebp)
+	movl	%edx, %eax
+	andl	$0, %eax
+	movl	%eax, -20(%ebp)
+	movl	-24(%ebp), %edx
+	movl	-20(%ebp), %ecx
+	movl	%ecx, %eax
+	orl	%edx, %eax
+	testl	%eax, %eax
+	je	.L38
+	.loc 2 112 0 is_stmt 0 discriminator 1
+	movl	$16777216, (%esp)
+	movl	$0, 4(%esp)
+	call	dbg_color
+	movl	%eax, 4(%esp)
+	movl	$.LC0, (%esp)
+	call	dbg_print
+	movl	$__func__.1356, 12(%esp)
+	movl	$112, 8(%esp)
+	movl	$.LC1, 4(%esp)
+	movl	$.LC2, (%esp)
+	call	dbg_print
+	movl	$.LC8, (%esp)
+	call	dbg_print
+	movl	$.LC4, 4(%esp)
+	movl	$.LC0, (%esp)
+	call	dbg_print
+.L38:
+	.loc 2 114 0 is_stmt 1
+	movl	8(%ebp), %eax
+	movl	12(%eax), %edx
+	movl	curthr, %eax
+	cmpl	%eax, %edx
+	jne	.L39
+	.loc 2 114 0 is_stmt 0 discriminator 1
+	movl	$.LC12, 16(%esp)
+	movl	$.LC6, 12(%esp)
+	movl	$__func__.1356, 8(%esp)
+	movl	$114, 4(%esp)
+	movl	$.LC1, (%esp)
+	call	dbg_panic
+.L39:
+	.loc 2 115 0 is_stmt 1
 	movl	dbg_modes, %eax
 	movl	dbg_modes+4, %edx
 	movl	%eax, %ecx
@@ -691,8 +712,8 @@ kmutex_unlock:
 	movl	%esi, %eax
 	orl	%ebx, %eax
 	testl	%eax, %eax
-	je	.L38
-	.loc 2 113 0 is_stmt 0 discriminator 1
+	je	.L41
+	.loc 2 115 0 is_stmt 0 discriminator 1
 	movl	$16777216, (%esp)
 	movl	$0, 4(%esp)
 	call	dbg_color
@@ -700,149 +721,19 @@ kmutex_unlock:
 	movl	$.LC0, (%esp)
 	call	dbg_print
 	movl	$__func__.1356, 12(%esp)
-	movl	$113, 8(%esp)
+	movl	$115, 8(%esp)
 	movl	$.LC1, 4(%esp)
 	movl	$.LC2, (%esp)
 	call	dbg_print
 	movl	$.LC11, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-.L38:
-	.loc 2 116 0 is_stmt 1
-	movl	8(%ebp), %eax
-	movl	%eax, (%esp)
-	call	sched_queue_empty
-	testl	%eax, %eax
-	jne	.L39
-	.loc 2 117 0
-	movl	8(%ebp), %eax
-	movl	%eax, (%esp)
-	call	sched_wakeup_on
-	movl	%eax, %edx
-	movl	8(%ebp), %eax
-	movl	%edx, 12(%eax)
-	.loc 2 118 0
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -16(%ebp)
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, -12(%ebp)
-	movl	-16(%ebp), %ecx
-	movl	-12(%ebp), %ebx
-	movl	%ebx, %eax
-	orl	%ecx, %eax
-	testl	%eax, %eax
-	je	.L41
-	.loc 2 118 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1356, 12(%esp)
-	movl	$118, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC8, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	jmp	.L41
-.L39:
-	.loc 2 120 0 is_stmt 1
-	movl	8(%ebp), %eax
-	movl	$0, 12(%eax)
-	.loc 2 121 0
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -24(%ebp)
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, -20(%ebp)
-	movl	-24(%ebp), %ecx
-	movl	-20(%ebp), %ebx
-	movl	%ebx, %eax
-	orl	%ecx, %eax
-	testl	%eax, %eax
-	je	.L41
-	.loc 2 121 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1356, 12(%esp)
-	movl	$121, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC3, (%esp)
 	call	dbg_print
 	movl	$.LC4, 4(%esp)
 	movl	$.LC0, (%esp)
 	call	dbg_print
 .L41:
-	.loc 2 126 0 is_stmt 1
-	movl	8(%ebp), %eax
-	movl	12(%eax), %edx
-	movl	curthr, %eax
-	cmpl	%eax, %edx
-	jne	.L42
-	.loc 2 126 0 is_stmt 0 discriminator 1
-	movl	$.LC12, 16(%esp)
-	movl	$.LC6, 12(%esp)
-	movl	$__func__.1356, 8(%esp)
-	movl	$126, 4(%esp)
-	movl	$.LC1, (%esp)
-	call	dbg_panic
-.L42:
-	.loc 2 127 0 is_stmt 1
-	movl	dbg_modes, %eax
-	movl	dbg_modes+4, %edx
-	movl	%eax, %esi
-	andl	$16777216, %esi
-	movl	%esi, -32(%ebp)
-	movl	%edx, %eax
-	andl	$0, %eax
-	movl	%eax, -28(%ebp)
-	movl	-32(%ebp), %edx
-	movl	-28(%ebp), %ecx
-	movl	%ecx, %eax
-	orl	%edx, %eax
-	testl	%eax, %eax
-	je	.L44
-	.loc 2 127 0 is_stmt 0 discriminator 1
-	movl	$16777216, (%esp)
-	movl	$0, 4(%esp)
-	call	dbg_color
-	movl	%eax, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-	movl	$__func__.1356, 12(%esp)
-	movl	$127, 8(%esp)
-	movl	$.LC1, 4(%esp)
-	movl	$.LC2, (%esp)
-	call	dbg_print
-	movl	$.LC11, (%esp)
-	call	dbg_print
-	movl	$.LC4, 4(%esp)
-	movl	$.LC0, (%esp)
-	call	dbg_print
-.L44:
-	.loc 2 128 0 is_stmt 1
+	.loc 2 116 0 is_stmt 1
 	nop
-	addl	$64, %esp
+	addl	$48, %esp
 	popl	%ebx
 	.cfi_restore 3
 	popl	%esi
@@ -1613,7 +1504,7 @@ __func__.1356:
 	.byte	0x1
 	.long	.LASF603
 	.byte	0x2
-	.byte	0x32
+	.byte	0x33
 	.byte	0x1
 	.long	.LFB7
 	.long	.LFE7
@@ -1624,7 +1515,7 @@ __func__.1356:
 	.uleb128 0x11
 	.string	"mtx"
 	.byte	0x2
-	.byte	0x32
+	.byte	0x33
 	.long	0x57b
 	.byte	0x2
 	.byte	0x91
@@ -1643,7 +1534,7 @@ __func__.1356:
 	.byte	0x1
 	.long	.LASF611
 	.byte	0x2
-	.byte	0x48
+	.byte	0x49
 	.byte	0x1
 	.long	0x50
 	.long	.LFB8
@@ -1655,7 +1546,7 @@ __func__.1356:
 	.uleb128 0x11
 	.string	"mtx"
 	.byte	0x2
-	.byte	0x48
+	.byte	0x49
 	.long	0x57b
 	.byte	0x2
 	.byte	0x91
@@ -1673,7 +1564,7 @@ __func__.1356:
 	.uleb128 0x17
 	.string	"tmp"
 	.byte	0x2
-	.byte	0x4f
+	.byte	0x50
 	.long	0x50
 	.byte	0x2
 	.byte	0x91
@@ -1693,7 +1584,7 @@ __func__.1356:
 	.byte	0x1
 	.long	.LASF605
 	.byte	0x2
-	.byte	0x6d
+	.byte	0x69
 	.byte	0x1
 	.long	.LFB9
 	.long	.LFE9
@@ -1704,7 +1595,7 @@ __func__.1356:
 	.uleb128 0x11
 	.string	"mtx"
 	.byte	0x2
-	.byte	0x6d
+	.byte	0x69
 	.long	0x57b
 	.byte	0x2
 	.byte	0x91

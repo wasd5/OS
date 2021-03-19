@@ -41,12 +41,10 @@ void
 sched_sleep_on(ktqueue_t *q)
 {
         //NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");
+    ktqueue_enqueue(q, curthr);
     curthr->kt_state = KT_SLEEP;
-    ktqueue_enqueue(q, curthr);    
-    while(curthr->kt_state == KT_SLEEP){
-            sched_switch();
-        dbg(DBG_PRINT, "(GRADING1A)\n");
-    }
+    sched_switch();
+
     dbg(DBG_PRINT, "(GRADING1A)\n");
 }
 
@@ -54,19 +52,13 @@ kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
     //NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
-    if(sched_queue_empty(q)) {
-            dbg(DBG_PRINT, "(GRADING1C)\n");
-            return NULL;
-    }
     kthread_t *kt = ktqueue_dequeue(q);
-    KASSERT((kt->kt_state == KT_SLEEP) || (kt->kt_state == KT_SLEEP_CANCELLABLE)); /* thr must be in either one of these two states */
-    dbg(DBG_PRINT, "(GRADING1A)\n");
-    
-    if(kt != NULL) {
+    if(kt != NULL){
         sched_make_runnable(kt);
         dbg(DBG_PRINT, "(GRADING1A)\n");
     }
     return kt;
+
 }
 
 void

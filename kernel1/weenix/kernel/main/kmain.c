@@ -189,16 +189,20 @@ bootstrap(int arg1, void *arg2)
         //NOT_YET_IMPLEMENTED("PROCS: bootstrap");
         proc_t *p = proc_create("idle");
         curproc = p;
+
         KASSERT(NULL != curproc);
         dbg(DBG_PRINT, "(GRADING1A 1.a)\n");
         KASSERT(PID_IDLE == curproc->p_pid);
         // exit test
         dbg(DBG_PRINT, "(GRADING1A 1.a)\n"); 
+
         kthread_t *kt = kthread_create(p, idleproc_run, arg1, arg2);
         curthr = kt;
+
         KASSERT(NULL != curthr);
         dbg(DBG_PRINT, "(GRADING1A 1.a)\n");
         dbg(DBG_PRINT, "(GRADING1A)\n");
+
         context_make_active(&(kt->kt_ctx));
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
@@ -325,14 +329,19 @@ initproc_create(void)
 {
         //NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         proc_t *p = proc_create("init");
+
         KASSERT(NULL != p);
         dbg(DBG_PRINT, "(GRADING1A 1.b)\n");
+
         KASSERT(PID_INIT == p->p_pid);
         dbg(DBG_PRINT, "(GRADING1A 1.b)\n");
+
         kthread_t* kt = kthread_create(p, initproc_run, 0, NULL);
+
         KASSERT(NULL != kt);
         dbg(DBG_PRINT, "(GRADING1A 1.b)\n");
         dbg(DBG_PRINT, "(GRADING1A)\n");
+
         return kt;
 }
 
@@ -358,9 +367,9 @@ initproc_run(int arg1, void *arg2)
         // sched_make_runnable(kt);
         // return NULL;
         #ifdef __DRIVERS__  // run test processes and threads in terminal
-            kshell_add_command("faber", my_faber_thread_test, "Run faber_thread_test().");
-            kshell_add_command("sunghan", my_sunghan_test, "Run sunghan_test().");
-            kshell_add_command("deadlock", my_sunghan_deadlock_test, "Run sunghan_deadlock_test().");
+            kshell_add_command("f", my_faber_thread_test, "Execute faber_thread_test().");
+            kshell_add_command("s", my_sunghan_test, "Execute sunghan_test().");
+            kshell_add_command("d", my_sunghan_deadlock_test, "Execute sunghan_deadlock_test().");
             kshell_t *ks = kshell_create(0);
             while(kshell_execute_next(ks));
             kshell_destroy(ks);

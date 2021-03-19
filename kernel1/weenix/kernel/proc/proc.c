@@ -370,7 +370,6 @@ proc_kill_all()
     //NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
     // kill children then itself
         proc_t *kill;
-        
         list_iterate_begin(proc_list(), kill, proc_t, p_list_link) {
             if (kill->p_pid != PID_IDLE && kill->p_pproc->p_pid != PID_IDLE && kill != curproc) {
                 proc_kill(kill, 0);
@@ -379,7 +378,7 @@ proc_kill_all()
         dbg(DBG_PRINT, "(GRADING1C)\n");
         } list_iterate_end();
     
-        if (curproc->p_pproc->p_pid != PID_IDLE && curproc->p_pid != PID_IDLE) {
+        if ((curproc->p_pproc->p_pid != PID_IDLE) && (curproc->p_pid != PID_IDLE)) {
                 dbg(DBG_PRINT, "(GRADING1C)\n");   
                 proc_kill(curproc, 0);
         }
