@@ -42,8 +42,13 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
-        NOT_YET_IMPLEMENTED("VFS: lookup");
-        return 0;
+        //NOT_YET_IMPLEMENTED("VFS: lookup");
+        if(dir->vn_ops->lookup == NULL){
+                return -ENOTDIR;
+        }else{
+                return dir->vn_ops->lookup(dir, name, len, result);
+        }
+
 }
 
 
@@ -69,7 +74,44 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
-        NOT_YET_IMPLEMENTED("VFS: dir_namev");
+        //NOT_YET_IMPLEMENTED("VFS: dir_namev");
+        vnode_t *p_vnode;
+        int index = 0;
+        int pathlen = strlen(pathname);
+        if(pathname[0]=='/'){
+                p_vnode = vfs_root_vn;
+                index = 1;
+        }else if(base==NULL){
+                p_vnode = curproc->p_cwd;
+        }else{
+                p_vnode = base;
+        }
+        //pathname resolution
+        while(1){
+                int start = index;
+                while(index < pathlen && pathname[index]!='/'){
+                        index++;
+                }
+                //TODO end with /
+                if(index == pathlen){
+                        (*res_vnode) = p_vnode;
+                        (*name) = pathname+start; 
+                        (*namelen) = strlen(*name);
+                        break;
+                }else{ 
+                        //need know max pathname length
+                        char curname[100];
+                        memcpy(curname, pathname+start, index-start);
+                        vnode_t *c_vnode;
+                        int retval = lookup(p_vnode, curname, index-start, &c_vnode);
+                        if(retval < 0){
+                                return retval;
+                        }else{
+                                p_vnode = c_vnode;
+                                index++;
+                        }
+                }
+        }
         return 0;
 }
 
@@ -87,7 +129,23 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
-        NOT_YET_IMPLEMENTED("VFS: open_namev");
+        //NOT_YET_IMPLEMENTED("VFS: open_namev");
+        size_t namelen;
+        const char *name = NULL;
+        vnode_t *res_parent_vnode;
+        int retval = dir_namev(pathname, &namelen, &name, base, &res_parent_vnode);
+        if(retval == -ENOTDIR){
+                return -ENOTDIR;
+        }
+        retval = lookup(res_parent_vnode, name, namelen, res_vnode);
+        if(retval == -ENOTDIR){
+                if((flag & O_CREAT) == O_CREAT){
+                        //create
+                        (res_parent_vnode)->vn_ops->create(res_parent_vnode, name, namelen, res_vnode);
+                }
+                //no such file or directory
+                return -ENOENT;
+        }
         return 0;
 }
 

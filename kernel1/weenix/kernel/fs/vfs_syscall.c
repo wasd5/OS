@@ -165,8 +165,30 @@ do_dup2(int ofd, int nfd)
 int
 do_mknod(const char *path, int mode, unsigned devid)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_mknod");
-        return -1;
+        //NOT_YET_IMPLEMENTED("VFS: do_mknod");
+        //may not need following mode check
+        if((mode & S_IFCHR)!= S_IFCHR && (mode & S_IFBLK)!= S_IFBLK){
+                return -EINVAL;
+        }
+
+        size_t namelen = 0;
+        const char *name = NULL;
+        vnode_t *res_parent_vnode;
+        int retval = dir_namev(path, &namelen, &name, NULL, &res_parent_vnode);
+        if(retval < 0){
+                return retval;
+        }
+
+        vnode_t *res_vnode;
+        retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
+        if(retval == -ENOENT){
+                return (res_parent_vnode)->vn_ops->mknod(res_parent_vnode, name, namelen, mode, devid);
+        }else if(retval == -ENOTDIR){
+                return -ENOTDIR;
+        }else if(retval == 0){
+                return -EEXIST;
+        }
+        return 0;
 }
 
 /* Use dir_namev() to find the vnode of the dir we want to make the new
@@ -186,8 +208,24 @@ do_mknod(const char *path, int mode, unsigned devid)
 int
 do_mkdir(const char *path)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_mkdir");
-        return -1;
+        //NOT_YET_IMPLEMENTED("VFS: do_mkdir");
+        size_t namelen = 0;
+        const char *name = NULL;
+        vnode_t *res_parent_vnode;
+        int retval = dir_namev(path, &namelen, &name, NULL, &res_parent_vnode);
+        if(retval < 0){
+                return retval;
+        }
+        vnode_t *res_vnode;
+        retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
+        if(retval == -ENOENT){
+                return (res_parent_vnode)->vn_ops->mkdir(res_parent_vnode, name, namelen);
+        }else if(retval == -ENOTDIR){
+                return -ENOTDIR;
+        }else if(retval == 0){
+                return -EEXIST;
+        }
+        return 0;
 }
 
 /* Use dir_namev() to find the vnode of the directory containing the dir to be
@@ -354,8 +392,23 @@ do_lseek(int fd, int offset, int whence)
 int
 do_stat(const char *path, struct stat *buf)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_stat");
-        return -1;
+        //NOT_YET_IMPLEMENTED("VFS: do_stat");
+        size_t namelen = 0;
+        const char *name = NULL;
+        vnode_t *res_parent_vnode;
+        int retval = dir_namev(path, &namelen, &name, NULL, &res_parent_vnode);
+        if(retval < 0){
+                return retval;
+        }
+        
+        vnode_t *res_vnode;
+        retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
+        if(retval < 0){
+                return retval;
+        }else{
+                return (res_parent_vnode)->vn_ops->stat(res_parent_vnode,buf);
+        }
+        return 0;
 }
 
 #ifdef __MOUNTING__

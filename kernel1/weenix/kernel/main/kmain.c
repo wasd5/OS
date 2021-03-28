@@ -236,14 +236,22 @@ idleproc_run(int arg1, void *arg2)
 #ifdef __VFS__
         /* Once you have VFS remember to set the current working directory
          * of the idle and init processes */
-        NOT_YET_IMPLEMENTED("VFS: idleproc_run");
-
+        //NOT_YET_IMPLEMENTED("VFS: idleproc_run");
+        curproc->p_cwd = vfs_root_vn;
+        initthr->kt_proc->p_cwd = vfs_root_vn;
         /* Here you need to make the null, zero, and tty devices using mknod */
         /* You can't do this until you have VFS, check the include/drivers/dev.h
          * file for macros with the device ID's you will need to pass to mknod */
-        NOT_YET_IMPLEMENTED("VFS: idleproc_run");
+        //NOT_YET_IMPLEMENTED("VFS: idleproc_run");
+        vfs_root_vn->vn_ops->mkdir(vfs_root_vn, "dev", 3);
+        vnode_t *dev_node;
+        vfs_root_vn->vn_ops->lookup(vfs_root_vn, "dev", 3, &dev_node);
+        dev_node->vn_ops->mknod(dev_node, "null", 4, S_IFCHR, MEM_NULL_DEVID);
+        dev_node->vn_ops->mknod(dev_node, "zero", 4, S_IFCHR, MEM_ZERO_DEVID);
+        dev_node->vn_ops->mknod(dev_node, "tty0", 4, S_IFCHR, MKDEVID(2,0));
+        dev_node->vn_ops->mknod(dev_node, "tty1", 4, S_IFCHR, MKDEVID(2,1));
 #endif
-
+        
         /* Finally, enable interrupts (we want to make sure interrupts
          * are enabled AFTER all drivers are initialized) */
         intr_enable();
