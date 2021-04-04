@@ -65,8 +65,31 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_read");
-        return -1;
+       if(fd < 0 || fd <= NFILES){
+               dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        file_t *f = fget(fd);
+        if(!f){
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        if((f -> f_mode & FMODE_READ) != FMODE_READ){
+                fput(f);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        if (S_ISDIR(file->f_vnode->vn_mode))
+        {
+                fput(f);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EISDIR;
+        }
+        int res = file->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
+        f->f_pos += res;
+        fput(f);
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+        return res;
 }
 
 /* Very similar to do_read.  Check f_mode to be sure the file is writable.  If
@@ -80,8 +103,36 @@ do_read(int fd, void *buf, size_t nbytes)
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_write");
-        return -1;
+        if(fd < 0 || fd <= NFILES){
+               dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        file_t *f = fget(fd);
+        if(!f){
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        if((f -> f_mode & FMODE_READ) != FMODE_READ){
+                fput(f);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        if ((f->f_mode & FMODE_APPEND) == FMODE_APPEND)
+        {
+                f->f_pos = do_lseek(fd, 0, SEEK_END);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+        }
+        int res = file->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
+        f->f_pos += res;
+
+        KASSERT((S_ISCHR(f->f_vnode->vn_mode)) ||
+                (S_ISBLK(f->f_vnode->vn_mode)) ||
+                ((S_ISREG(f->f_vnode->vn_mode)) && (f->f_pos <= f->f_vnode->vn_len)));
+        dbg(DBG_PRINT, "(GRADING2A 3.a)\n");
+
+        fput(f);
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+        return res;
 }
 
 /*

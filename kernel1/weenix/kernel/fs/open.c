@@ -88,9 +88,70 @@ get_empty_fd(proc_t *p)
  *        exists.
  */
 
+/*
+O_EXEC
+Open for execute only (non-directory files). The result is unspecified if this flag is applied to a directory.
+O_RDONLY
+Open for reading only.
+O_RDWR
+Open for reading and writing.
+O_SEARCH
+Open directory for search only. The result is unspecified if this flag is applied to a non-directory file.
+O_WRONLY
+Open for writing only.
+*/
+
 int
 do_open(const char *filename, int oflags)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_open");
-        return -1;
+       int fd = get_empty_fd(curproc);
+       file_t *f = fget(-1);
+       curproc->p_files[fd] = f;
+       f->f_mode = 0;
+//set f_mode
+        switch(oflags & 0x40f)
+    {
+        case O_RDONLY:
+            f->f_mode = FMODE_READ;
+            dbg(DBG_PRINT,"(GRADING2B)\n");
+            break;
+        case O_WRONLY:
+            f->f_mode = FMODE_WRITE;
+            dbg(DBG_PRINT,"(GRADING2B)\n");
+            break;
+        case O_RDWR:
+            f->f_mode = FMODE_READ | FMODE_WRITE;
+            dbg(DBG_PRINT,"(GRADING2B)\n");
+            break;
+        default:
+            break;      
+    }
+    if (oflags & O_APPEND)
+        {
+                f->f_mode = (f->f_mode | FMODE_APPEND);
+                dbg(DBG_PRINT,"(GRADING2B)\n");
+        }
+//gey vnode for file
+        vnode_t *result = NULL;
+        int msg = open_namev(filename, oflags, &result, NULL);
+        if (msg != 0)
+        {
+                curproc->p_files[fd] = NULL;
+                fput(f);
+                dbg(DBG_PRINT,"(GRADING2B)\n");
+                return msg;
+        }
+
+        if(S_ISDIR(result->vn_mode) && ((oflags & (O_WRONLY | O_RDWR)) != O_RDONLY)) 
+        {
+            curproc->p_files[fd] = NULL;
+            fput(f);
+            vput(result); 
+            dbg(DBG_PRINT,"(GRADING2B)\n");
+            return -EISDIR; 
+        }
+        f->f_pos = 0;
+        f->f_vnode = result;
+        dbg(DBG_PRINT,"(GRADING2B)\n");
+        return fd;
 }
