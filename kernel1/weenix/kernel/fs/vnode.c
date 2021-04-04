@@ -463,11 +463,12 @@ special_file_read(vnode_t *file, off_t offset, void *buf, size_t count)
         KASSERT(file);
         dbg(DBG_PRINT, "(GRADING2A 1.a)\n");
         KASSERT((S_ISCHR(file->vn_mode) || S_ISBLK(file->vn_mode)));
-        int reval = file->vn_cdev->cd_ops->read(file->vn_cdev,offset,buf,count); 
+        dbg(DBG_PRINT, "(GRADING2A 1.a)\n");
+        int retval = file->vn_cdev->cd_ops->read(file->vn_cdev,offset,buf,count); 
         KASSERT(file->vn_cdev && file->vn_cdev->cd_ops && file->vn_cdev->cd_ops->read);/* make sure these points are non-null */
         dbg(DBG_PRINT, "(GRADING2A 1.a)\n");
         dbg(DBG_PRINT, "(GRADING2A)\n");
-        return reval;
+        return retval;
 }
 
 /*
@@ -482,11 +483,12 @@ special_file_write(vnode_t *file, off_t offset, const void *buf, size_t count)
        KASSERT(file); 
         KASSERT((S_ISCHR(file->vn_mode) || S_ISBLK(file->vn_mode))); 
         dbg(DBG_PRINT, "(GRADING2A 1.b)\n");
-        int reval = file->vn_cdev->cd_ops->write(file->vn_cdev,offset,(void *)buf,count);
+        int retval = file->vn_cdev->cd_ops->write(file->vn_cdev,offset,(void *)buf,count);
+        
         KASSERT(file->vn_cdev && file->vn_cdev->cd_ops && file->vn_cdev->cd_ops->write); 
         dbg(DBG_PRINT, "(GRADING2A 1.b)\n");
         dbg(DBG_PRINT, "(GRADING2A)\n");
-        return reval;
+        return retval;
 }
 
 /* Memory map the special file represented by <file>. All of the

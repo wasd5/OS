@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "kthread.h": "c",
-        "locale": "c"
+        "locale": "c",
+        "__locale": "c"
     }
 }
