@@ -11,7 +11,7 @@
 # are built. To enable something set it to 1, otherwise set it to 0.
 #
      DRIVERS=1
-         VFS=0
+         VFS=1
         S5FS=0
           VM=0
      DYNAMIC=0
@@ -63,7 +63,7 @@
 # changed at runtime by modifying the dbg_modes global variable.
 #
 # All debug statements
-        DBG=error,test
+        DBG=error,print,test
 # Change to this for no debug statements
 #       DBG=-all
 # Change to this to select all the "General" and "VFS" stuff in "kernel/include/util/debug.h"

@@ -163,7 +163,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         if(retval == -ENOTDIR){
                 if((flag & O_CREAT) == O_CREAT){
                         //create
-                        KASSERT(NULL != dir_res_vnode->vn_ops->create);
+                        KASSERT(NULL != res_parent_vnode->vn_ops->create);
                         dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
                         (res_parent_vnode)->vn_ops->create(res_parent_vnode, name, namelen, res_vnode);
                 }

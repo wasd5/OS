@@ -79,16 +79,18 @@ do_read(int fd, void *buf, size_t nbytes)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if (S_ISDIR(file->f_vnode->vn_mode)){
+        /*
+        if (S_ISDIR(f->f_vnode->vn_mode)){
                 fput(f);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EISDIR;
         }
+        */
         if(nbytes==0){
             fput(f);
             return 0;
         }
-        int res = file->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
+        int res = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
         f->f_pos += res;
         fput(f);
         dbg(DBG_PRINT, "(GRADING2B)\n");
@@ -125,7 +127,7 @@ do_write(int fd, const void *buf, size_t nbytes)
                 f->f_pos = do_lseek(fd, 0, SEEK_END);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
         }
-        int res = file->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
+        int res = f->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
         f->f_pos += res;
 
         KASSERT((S_ISCHR(f->f_vnode->vn_mode)) ||(S_ISBLK(f->f_vnode->vn_mode)) ||
@@ -152,13 +154,13 @@ do_close(int fd)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        file_t f = curproc->p_files[fd];
-        if(!f){
+        
+        if(curproc->p_files[fd] == NULL){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        fput(f);
-        f = NULL;
+        fput(curproc->p_files[fd]);
+        curproc->p_files[fd] = NULL;
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return 0;
 }
@@ -286,7 +288,7 @@ do_mknod(const char *path, int mode, unsigned devid)
         }
         vnode_t *res_vnode;
         retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
-        KASSERT(NULL != dir_vnode->vn_ops->mknod);
+        KASSERT(NULL != res_parent_vnode->vn_ops->mknod);
         dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
         dbg(DBG_PRINT, "(GRADING2B)\n");
         if(retval == -ENOENT){
@@ -370,31 +372,32 @@ do_rmdir(const char *path)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval;
         }
-        if (namelen == 1 && name_match(path, ".", namelen)){
+        if (res_parent_vnode->vn_ops->rmdir == NULL)
+        {
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                vput(res_parent_vnode);
+                return -ENOTDIR;
+        }
+        if (strcmp(name, ".") == 0){
                 vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EINVAL;
         }
-        if (namelen == 2 && name_match(path, "..", namelen)){
+        if (strcmp(name, "..") == 0){
                 vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -ENOTEMPTY;
         }
-        vnode_t *res_vnode = NULL;
-        retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
-        if (retval == 0){
-                KASSERT(NULL != res_parent_vnode->vn_ops->rmdir);
-                dbg(DBG_PRINT, "(GRADING2A 3.d)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                vput(res_vnode);
-                vput(res_parent_vnode);
-                retval = res_parent_vnode->vn_ops->rmdir(res_parent_vnode, name, namelen);
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return retval;
-        }
+        KASSERT(NULL != res_parent_vnode->vn_ops->rmdir);
+        dbg(DBG_PRINT, "(GRADING2A 3.d)\n");
+        dbg(DBG_PRINT, "(GRADING2B)\n"); 
+
+        int res = res_parent_vnode->vn_ops->rmdir(res_parent_vnode, path, namelen);
+
         vput(res_parent_vnode);
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        return retval；
+
+        return res;
+       
 }
 
 /*
@@ -482,7 +485,7 @@ do_link(const char *from, const char *to)
         int retval_to = dir_namev(to, &namelen, &name, NULL, &vnode_dir);
         if (retval_to != 0)
         {
-                vput(from_vnode);
+                vput(vnode_from);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval_to;
         }
@@ -632,8 +635,8 @@ do_lseek(int fd, int offset, int whence)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EINVAL;
         }
-        file_t *file = fget(fd);
-        if (file == NULL){
+        file_t *ft = fget(fd);
+        if (ft == NULL){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
