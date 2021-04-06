@@ -62,41 +62,33 @@
  * In all cases, be sure you do not leak file refcounts by returning before
  * you fput() a file that you fget()'ed.
  */
-int
-do_read(int fd, void *buf, size_t nbytes)
+int do_read(int fd, void *buf, size_t nbytes)
 {
-       if(fd < 0 || fd <= NFILES){
-               dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -EBADF;
-        }
-        file_t *f = fget(fd);
-        if(!f){
+        if (fd < 0 || fd >= NFILES){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if(!(f -> f_mode & FMODE_READ)){
+        file_t *f = fget(fd);
+        if (f == NULL){
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        if (!(f->f_mode & FMODE_READ)){
                 fput(f);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        /*
         if (S_ISDIR(f->f_vnode->vn_mode)){
                 fput(f);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EISDIR;
         }
-        */
-        if(nbytes==0){
-            fput(f);
-            return 0;
-        }
-        int res = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
-        f->f_pos += res;
+        int byt = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
+        f->f_pos += byt;
         fput(f);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        return res;
+        return byt;
 }
-
 /* Very similar to do_read.  Check f_mode to be sure the file is writable.  If
  * f_mode & FMODE_APPEND, do_lseek() to the end of the file, call the write
  * vn_op, and fput the file.  As always, be mindful of refcount leaks.
@@ -105,38 +97,35 @@ do_read(int fd, void *buf, size_t nbytes)
  *      o EBADF
  *        fd is not a valid file descriptor or is not open for writing.
  */
-int
-do_write(int fd, const void *buf, size_t nbytes)
+
+int do_write(int fd, const void *buf, size_t nbytes)
 {
-        if(fd < 0 || fd <= NFILES){
-               dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -EBADF;
-        }
-        file_t *f = fget(fd);
-        if(!f){
+        if (fd < 0 || fd >= NFILES){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if(!(f -> f_mode & FMODE_READ)){
+        file_t *f = fget(fd);
+        if (f == NULL){
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return -EBADF;
+        }
+        if (!(f->f_mode & FMODE_WRITE)){
                 fput(f);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if (!(f->f_mode & FMODE_APPEND))
-        {
-                f->f_pos = do_lseek(fd, 0, SEEK_END);
+        if (f->f_mode & FMODE_APPEND){
+                do_lseek(fd, 0, SEEK_END);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
         }
-        int res = f->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
-        f->f_pos += res;
-
-        KASSERT((S_ISCHR(f->f_vnode->vn_mode)) ||(S_ISBLK(f->f_vnode->vn_mode)) ||
+        int byt = f->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
+        f->f_pos += byt;
+        KASSERT((S_ISCHR(f->f_vnode->vn_mode)) || (S_ISBLK(f->f_vnode->vn_mode)) ||
                 ((S_ISREG(f->f_vnode->vn_mode)) && (f->f_pos <= f->f_vnode->vn_len)));
         dbg(DBG_PRINT, "(GRADING2A 3.a)\n");
-
         fput(f);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        return res;
+        return byt;
 }
 
 /*
