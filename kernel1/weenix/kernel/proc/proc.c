@@ -270,6 +270,21 @@ proc_create(char *name)
         list_insert_tail(&_proc_list, &(p->p_list_link));
         //p_child_link in assign parent child relationship
         dbg(DBG_PRINT, "(GRADING1A)\n");
+        #ifdef __VFS__
+    	int fd = 0;
+    	for(fd = 0; fd < NFILES; fd++) {
+        	p->p_files[fd] = NULL;
+        	dbg(DBG_PRINT, "(GRADING2A)\n");
+    	}
+    	p->p_cwd = vfs_root_vn;
+    	if (p->p_cwd != NULL){
+        	vref(p->p_cwd);
+        	dbg(DBG_PRINT, "(GRADING2A)\n");
+   		}
+    	#endif
+
+    	dbg(DBG_PRINT, "(GRADING2A)\n");
+
         return p;
 }
 
