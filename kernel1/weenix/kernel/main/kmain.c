@@ -82,6 +82,10 @@ extern void *faber_thread_test(int, void*);
 extern void *sunghan_test(int, void*);
 extern void *sunghan_deadlock_test(int, void*);
 
+extern void *vfstest_main(int, void*);
+extern int faber_fs_thread_test(kshell_t *, int argc, char **argv);
+extern int faber_directory_test(kshell_t *, int argc, char **argv);
+
 /**
  * This is the first real C function ever called. It performs a lot of
  * hardware-specific initialization, then creates a pseudo-context to
@@ -238,18 +242,21 @@ idleproc_run(int arg1, void *arg2)
          * of the idle and init processes */
         //NOT_YET_IMPLEMENTED("VFS: idleproc_run");
         curproc->p_cwd = vfs_root_vn;
+         vref(vfs_root_vn);
         initthr->kt_proc->p_cwd = vfs_root_vn;
+        vref(vfs_root_vn);
         /* Here you need to make the null, zero, and tty devices using mknod */
         /* You can't do this until you have VFS, check the include/drivers/dev.h
          * file for macros with the device ID's you will need to pass to mknod */
         //NOT_YET_IMPLEMENTED("VFS: idleproc_run");
-        vfs_root_vn->vn_ops->mkdir(vfs_root_vn, "dev", 3);
-        vnode_t *dev_node;
-        vfs_root_vn->vn_ops->lookup(vfs_root_vn, "dev", 3, &dev_node);
-        dev_node->vn_ops->mknod(dev_node, "null", 4, S_IFCHR, MEM_NULL_DEVID);
-        dev_node->vn_ops->mknod(dev_node, "zero", 4, S_IFCHR, MEM_ZERO_DEVID);
-        dev_node->vn_ops->mknod(dev_node, "tty0", 4, S_IFCHR, MKDEVID(2,0));
-        dev_node->vn_ops->mknod(dev_node, "tty1", 4, S_IFCHR, MKDEVID(2,1));
+		do_mkdir("/dev");
+        
+        do_mknod("/dev/null",S_IFCHR,MKDEVID(1,0));
+
+        do_mknod("/dev/zero",S_IFCHR,MKDEVID(1,1));
+        do_mknod("/dev/tty0",S_IFCHR,MKDEVID(2,0));
+        do_mknod("/dev/tty1",S_IFCHR,MKDEVID(2,1));
+        do_mknod("/dev/sda", S_IFBLK, MKDEVID(1,0));       
 #endif
         
         /* Finally, enable interrupts (we want to make sure interrupts
@@ -322,6 +329,17 @@ int my_sunghan_deadlock_test(kshell_t *ks, int arg1, char **arg2)
     return 0;
 }
 
+int my_vfs_test(kshell_t *ks, int arg1, char **arg2)
+{
+    int exitstatus = -1;
+    proc_t* p = proc_create("vfs_test");
+    kthread_t* kt = kthread_create(p, vfstest_main, 1, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &exitstatus);
+    return 0;
+}
+
+
 /**
  * This function, called by the idle process (within 'idleproc_run'), creates the
  * process commonly refered to as the "init" process, which should have PID 1.
@@ -378,6 +396,10 @@ initproc_run(int arg1, void *arg2)
             kshell_add_command("f", my_faber_thread_test, "Execute faber_thread_test().");
             kshell_add_command("s", my_sunghan_test, "Execute sunghan_test().");
             kshell_add_command("d", my_sunghan_deadlock_test, "Execute sunghan_deadlock_test().");
+
+            kshell_add_command("t", faber_fs_thread_test, "Execute faber_fs_thread_test().");
+        	kshell_add_command("d", faber_directory_test, "Execute faber_directory_test().");
+        	kshell_add_command("v", my_vfs_test, "Execute vfs_test().");
             kshell_t *ks = kshell_create(0);
             while(kshell_execute_next(ks));
             kshell_destroy(ks);
