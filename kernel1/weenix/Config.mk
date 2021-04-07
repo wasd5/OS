@@ -67,7 +67,7 @@
 # Change to this for no debug statements
 #       DBG=-all
 # Change to this to select all the "General" and "VFS" stuff in "kernel/include/util/debug.h"
-#       DBG = error,temp,print,test,testpass,testfail,vfs,fref,vnref
+#      DBG = error,temp,print,test,testpass,testfail,vfs,fref,vnref
 # Grading: (the grader will use the next line for grading "SELF-checks" and section (A) of grading guidelines)
 #       DBG = error,print,test
 # Grading: (the grader will use the next line when grading in general, i.e., will not see things printed with DBG_PRINT)

@@ -48,8 +48,15 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         KASSERT(result != NULL);
         dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
         if(dir->vn_ops->lookup == NULL){
+                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return -ENOTDIR;
         }else{
+                if(len == 0){
+                        (*result) = dir;
+                        dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
+                        return 0;
+                }
+                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return dir->vn_ops->lookup(dir, name, len, result);
         }
 
@@ -112,7 +119,11 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 if(index == pathlen){
                         dbg(DBG_PRINT, "(GRADING2B)\n");
                         (*res_vnode) = p_vnode;
-                        (*name) = pathname+start; 
+                        if(start == index){
+                                (*name) = "";
+                        }else{
+                                (*name) = pathname+start;
+                        }
                         (*namelen) = strlen(*name);
                         break;
                 }else{ 
@@ -132,6 +143,8 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                         }
                 }
         }
+        //successful get vnode:increment vnode count
+        vref(*res_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return 0;
 }
@@ -155,24 +168,28 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         const char *name = NULL;
         vnode_t *res_parent_vnode;
         int retval = dir_namev(pathname, &namelen, &name, base, &res_parent_vnode);
-        if(retval == -ENOTDIR){
+        if(retval <0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -ENOTDIR;
+                return retval;
         }
         retval = lookup(res_parent_vnode, name, namelen, res_vnode);
-        if(retval == -ENOTDIR){
+        if(retval == -ENOENT){
                 if((flag & O_CREAT) == O_CREAT){
                         //create
                         KASSERT(NULL != res_parent_vnode->vn_ops->create);
                         dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
                         (res_parent_vnode)->vn_ops->create(res_parent_vnode, name, namelen, res_vnode);
+                        dbg(DBG_PRINT, "(GRADING2B)\n");
+                        return 0;
+                }else{
+                        //no such file or directory
+                        dbg(DBG_PRINT, "(GRADING2B)\n");
+                        return -ENOENT;
                 }
-                //no such file or directory
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -ENOENT;
+                
         }
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        return 0;
+        return retval;
 }
 
 #ifdef __GETCWD__

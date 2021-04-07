@@ -132,7 +132,7 @@ do_open(const char *filename, int oflags)
                 dbg(DBG_PRINT,"(GRADING2B)\n");
         }
 //gey vnode for file
-        vnode_t *result = NULL;
+        vnode_t *result;
         int msg = open_namev(filename, oflags, &result, NULL);
         if (msg != 0)
         {

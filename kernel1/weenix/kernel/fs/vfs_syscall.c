@@ -329,10 +329,10 @@ do_mkdir(const char *path)
         }
         vnode_t *res_vnode;
         retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
-        KASSERT(NULL != res_parent_vnode ->vn_ops->mkdir);
-        dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
         dbg(DBG_PRINT, "(GRADING2B)\n");
         if(retval == -ENOENT){
+                KASSERT(NULL != res_parent_vnode ->vn_ops->mkdir);
+                dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 return (res_parent_vnode)->vn_ops->mkdir(res_parent_vnode, name, namelen);
         }else if(retval == -ENOTDIR){
                 return -ENOTDIR;
@@ -393,9 +393,8 @@ do_rmdir(const char *path)
         dbg(DBG_PRINT, "(GRADING2B)\n"); 
 
         int res = res_parent_vnode->vn_ops->rmdir(res_parent_vnode, path, namelen);
-
         vput(res_parent_vnode);
-
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         return res;
        
 }
@@ -669,6 +668,9 @@ int
 do_stat(const char *path, struct stat *buf)
 {
         //NOT_YET_IMPLEMENTED("VFS: do_stat");
+        if(strlen(path) == 0){
+                return -EINVAL;
+        }
         size_t namelen = 0;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
