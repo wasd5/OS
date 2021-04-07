@@ -470,10 +470,10 @@ do_unlink(const char *path)
  *      o EPERM
  *        from is a directory.
  */
-int
-do_link(const char *from, const char *to)
+int do_link(const char *from, const char *to)
 {
-        size_t namelen = 0;
+        // NOT_YET_IMPLEMENTED("VFS: do_link");
+       size_t namelen = 0;
         const char *name = NULL;
         vnode_t * vnode_from;
         int retval_from = open_namev(from, O_CREAT, &vnode_from, NULL);
@@ -489,30 +489,10 @@ do_link(const char *from, const char *to)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval_to;
         }
-        vnode_t *vnode_to;
-        if (lookup(vnode_dir, name, namelen, &vnode_to) == 0)
-        {
-                vput(vnode_from);
-                vput(vnode_dir);
-                vput(vnode_to);
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -EEXIST;
-        }
-
-        if (vnode_dir->vn_ops->link == NULL)
-        {
-                vput(vnode_from);
-                vput(vnode_dir);
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -ENOTDIR;
-        }
-        int retval = vnode_dir->vn_ops->link(vnode_from, vnode_dir, name, namelen);
-        vput(vnode_from);
         vput(vnode_dir);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        return retval;
+        return retval_from;
 }
-
 /*      o link newname to oldname
  *      o unlink oldname
  *      o return the value of unlink, or an error
@@ -583,19 +563,21 @@ do_chdir(const char *path)
  *      o ENOTDIR
  *        File descriptor does not refer to a directory.
  */
-int
-do_getdent(int fd, struct dirent *dirp)
+int do_getdent(int fd, struct dirent *dirp)
 {
+        //NOT_YET_IMPLEMENTED("VFS: do_getdent");
         if (fd < 0 || fd > NFILES){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
         file_t *file = fget(fd);
-        if (file == NULL){
+        if (file == NULL)
+        {
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if ((file->f_vnode->vn_ops->readdir == NULL) || !S_ISDIR(file->f_vnode->vn_mode)){
+        if (file->f_vnode->vn_ops->readdir == NULL|| !S_ISDIR(file->f_vnode->vn_mode)){
+ 
                 fput(file);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -ENOTDIR;
@@ -610,7 +592,7 @@ do_getdent(int fd, struct dirent *dirp)
         file->f_pos = file->f_pos + byte;
         fput(file);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        return sizeof(dirp);
+        return sizeof(dirent_t);
         
 }
 
