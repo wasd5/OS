@@ -104,11 +104,13 @@ Open for writing only.
 int
 do_open(const char *filename, int oflags)
 {
+        dbg(DBG_PRINT,"(GRADING2B)\n");
         //judge oflags: O_WRONLY|O_RDWR illegal
         if((oflags & O_WRONLY) == O_WRONLY && (oflags & O_RDWR) == O_RDWR){
+            dbg(DBG_PRINT,"(GRADING2B)\n");
             return -EINVAL;
         }
-
+        dbg(DBG_PRINT,"(GRADING2B)\n");
         int fd = get_empty_fd(curproc);
         file_t *f = fget(-1);
         curproc->p_files[fd] = f;
@@ -128,8 +130,9 @@ do_open(const char *filename, int oflags)
     	} else if ((oflags & O_RDONLY) == O_RDONLY){
 		    f->f_mode |= FMODE_READ;
 		    dbg(DBG_PRINT,"(GRADING2B)\n");
-    }
+        }
 //get vnode for file
+        dbg(DBG_PRINT,"(GRADING2B)\n");
         vnode_t *result;
         int msg = open_namev(filename, oflags, &result, NULL);
         if (msg != 0)
@@ -139,7 +142,7 @@ do_open(const char *filename, int oflags)
                 dbg(DBG_PRINT,"(GRADING2B)\n");
                 return msg;
         }
-
+        dbg(DBG_PRINT,"(GRADING2B)\n");
         if(S_ISDIR(result->vn_mode) && ((oflags & (O_WRONLY | O_RDWR)) != O_RDONLY)) 
         {
             curproc->p_files[fd] = NULL;

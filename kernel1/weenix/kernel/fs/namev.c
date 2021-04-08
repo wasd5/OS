@@ -43,25 +43,31 @@ int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
         //NOT_YET_IMPLEMENTED("VFS: lookup");
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         KASSERT(dir != NULL);
         KASSERT(name != NULL);
         KASSERT(result != NULL);
         dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
         if(len > NAME_LEN){
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return -ENAMETOOLONG;
         }
         if(dir->vn_ops->lookup == NULL){
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return -ENOTDIR;
         }else{
                 if(len == 0){
                         (*result) = dir;
-                        dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                         vref(*result);
+                        dbg(DBG_PRINT, "(GRADING2B)\n");
+                        dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                         return 0;
                 }
-                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 int ret = dir->vn_ops->lookup(dir, name, len, result);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return ret;
         }
 
@@ -91,6 +97,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
         //NOT_YET_IMPLEMENTED("VFS: dir_namev");
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         KASSERT(NULL != pathname); /* the "pathname" argument must be non-NULL */
         dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
         KASSERT(NULL != namelen); /* the "namelen" argument must be non-NULL */
@@ -114,6 +121,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 dbg(DBG_PRINT, "(GRADING2B)\n");
         }
         vref(p_vnode);
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         //pathname resolution
         while(1){
                 int start = index;
@@ -126,18 +134,21 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                         (*res_vnode) = p_vnode;
                         if(start == index){
                                 (*name) = "";
+                                dbg(DBG_PRINT, "(GRADING2B)\n");
                         }else{
                                 (*name) = pathname+start;
+                                dbg(DBG_PRINT, "(GRADING2B)\n");
                         }
                         (*namelen) = strlen(*name);
+                        dbg(DBG_PRINT, "(GRADING2B)\n");
                         break;
                 }else{ 
                         //need know max pathname length
+                        dbg(DBG_PRINT, "(GRADING2B)\n");
                         char curname[100];
                         memcpy(curname, pathname+start, index-start);
                         vnode_t *c_vnode;
                         int retval = lookup(p_vnode, curname, index-start, &c_vnode);
-                        dbg(DBG_PRINT, "(GRADING2B)\n");
                         if(retval < 0){
                                 vput(p_vnode);
                                 dbg(DBG_PRINT, "(GRADING2B)\n");
@@ -151,7 +162,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                                 }
                                 dbg(DBG_PRINT, "(GRADING2B)\n");
                         }
+                        dbg(DBG_PRINT, "(GRADING2B)\n");
                 }
+                dbg(DBG_PRINT, "(GRADING2B)\n");
         }
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return 0;
@@ -172,6 +185,11 @@ int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
         //NOT_YET_IMPLEMENTED("VFS: open_namev");
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+        dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
+        KASSERT(NULL != pathname); /* the "pathname" argument must be non-NULL */
+        dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
+        KASSERT(NULL != res_vnode); /* the "res_vnode" argument must be non-NULL */
         size_t namelen;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
@@ -182,6 +200,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         }
         retval = lookup(res_parent_vnode, name, namelen, res_vnode);
         vput(res_parent_vnode);
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         if(retval == -ENOENT){
                 if((flag & O_CREAT) == O_CREAT){
                         //create

@@ -65,10 +65,12 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
-       if(fd < 0 || fd >= NFILES){
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+        if(fd < 0 || fd >= NFILES){
                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         file_t *f = fget(fd);
         if(!f){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
@@ -85,9 +87,10 @@ do_read(int fd, void *buf, size_t nbytes)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EISDIR;
         }
-        
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         if(nbytes==0){
             fput(f);
+            dbg(DBG_PRINT, "(GRADING2B)\n");
             return 0;
         }
         int res = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
@@ -108,8 +111,9 @@ do_read(int fd, void *buf, size_t nbytes)
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         if(fd < 0 || fd >= NFILES){
-               dbg(DBG_PRINT, "(GRADING2B)\n");
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
         file_t *f = fget(fd);
@@ -274,10 +278,12 @@ do_mknod(const char *path, int mode, unsigned devid)
 {
         //NOT_YET_IMPLEMENTED("VFS: do_mknod");
         //may not need following mode check
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         if((mode & S_IFCHR)!= S_IFCHR && (mode & S_IFBLK)!= S_IFBLK){
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EINVAL;
         }
-
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         size_t namelen = 0;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
@@ -294,13 +300,16 @@ do_mknod(const char *path, int mode, unsigned devid)
         if(retval == -ENOENT){
                 int ret = (res_parent_vnode)->vn_ops->mknod(res_parent_vnode, name, namelen, mode, devid);
                 vput(res_parent_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return ret;
         }else if(retval == -ENOTDIR){
                 vput(res_parent_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -ENOTDIR;
         }else{
                 vput(res_parent_vnode);
                 vput(res_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EEXIST;
         }
 }
@@ -323,6 +332,7 @@ int
 do_mkdir(const char *path)
 {
         //NOT_YET_IMPLEMENTED("VFS: do_mkdir");
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         size_t namelen = 0;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
@@ -339,17 +349,21 @@ do_mkdir(const char *path)
                 dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 int ret = (res_parent_vnode)->vn_ops->mkdir(res_parent_vnode, name, namelen);
                 vput(res_parent_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return ret;
         }else if(retval == -ENOTDIR){
                 vput(res_parent_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -ENOTDIR;
         }else if(retval == -ENAMETOOLONG){
                 vput(res_parent_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval;
         }else{
                 //retval == 0
                 vput(res_parent_vnode);
                 vput(res_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EEXIST;
         }
 }
@@ -699,9 +713,11 @@ int
 do_stat(const char *path, struct stat *buf)
 {
         //NOT_YET_IMPLEMENTED("VFS: do_stat");
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         if(strlen(path) == 0){
                 return -EINVAL;
         }
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         size_t namelen = 0;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
@@ -710,7 +726,7 @@ do_stat(const char *path, struct stat *buf)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval;
         }
-        
+        dbg(DBG_PRINT, "(GRADING2B)\n");
         vnode_t *res_vnode;
         retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
         if(retval < 0){
