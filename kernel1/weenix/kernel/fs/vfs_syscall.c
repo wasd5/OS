@@ -117,12 +117,12 @@ do_write(int fd, const void *buf, size_t nbytes)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if(!(f -> f_mode & FMODE_READ)){
+        if((f -> f_mode & FMODE_WRITE) != FMODE_WRITE){
                 fput(f);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if (!(f->f_mode & FMODE_APPEND))
+        if ((f->f_mode & FMODE_APPEND) == FMODE_APPEND)
         {
                 f->f_pos = do_lseek(fd, 0, SEEK_END);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
@@ -487,6 +487,9 @@ int do_link(const char *from, const char *to)
         const char *name = NULL;
         vnode_t * vnode_from;
         int retval_from = open_namev(from, O_CREAT, &vnode_from, NULL);
+        if(retval_from <0){
+                return retval_from;
+        }
         /*if(retval_from == 0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval_from;
@@ -494,15 +497,31 @@ int do_link(const char *from, const char *to)
 */
         vnode_t *vnode_dir;
         int retval_to = dir_namev(to, &namelen, &name, NULL, &vnode_dir);
+        if(retval_to < 0){
+                vput(vnode_from);
+                return retval_to;
+        }
+        vnode_t *vnode_to;
+        retval_to = lookup(vnode_dir, name, namelen, &vnode_to);
+        if(retval_to < 0){
+                vput(vnode_from);
+                vput(vnode_dir);
+                return retval_to;
+        }
+        /*
         if (retval_to != 0 && retval_from == 0)
         {
                 vput(vnode_from);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval_to;
         }
+         */
+        int retval = vnode_dir->vn_ops->link(vnode_from, vnode_dir, name, namelen);
+        vput(vnode_to);
         vput(vnode_dir);
+        vput(vnode_from);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        return retval_from;
+        return retval;
 }
 /*      o link newname to oldname
  *      o unlink oldname

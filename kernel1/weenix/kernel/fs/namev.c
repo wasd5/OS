@@ -176,7 +176,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         const char *name = NULL;
         vnode_t *res_parent_vnode;
         int retval = dir_namev(pathname, &namelen, &name, base, &res_parent_vnode);
-        if(retval <0){
+        if(retval < 0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval;
         }

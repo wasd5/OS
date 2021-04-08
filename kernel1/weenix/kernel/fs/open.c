@@ -104,27 +104,32 @@ Open for writing only.
 int
 do_open(const char *filename, int oflags)
 {
-       int fd = get_empty_fd(curproc);
-       file_t *f = fget(-1);
-       curproc->p_files[fd] = f;
-       f->f_mode = 0;
+        //judge oflags: O_WRONLY|O_RDWR illegal
+        if((oflags & O_WRONLY) == O_WRONLY && (oflags & O_RDWR) == O_RDWR){
+            return -EINVAL;
+        }
+
+        int fd = get_empty_fd(curproc);
+        file_t *f = fget(-1);
+        curproc->p_files[fd] = f;
+        f->f_mode = 0;
 //set f_mode
-        if (oflags & O_APPEND){
-        f->f_mode = FMODE_APPEND;
-	dbg(DBG_PRINT,"(GRADING2B)\n");
+        if ((oflags & O_APPEND) == O_APPEND){
+            f->f_mode = FMODE_APPEND;
+	        dbg(DBG_PRINT,"(GRADING2B)\n");
     	}
 
-    	if ((oflags & O_WRONLY) && !(oflags & O_RDWR)){
+    	if ((oflags & O_WRONLY) == O_WRONLY && (oflags & O_RDWR) != O_RDWR){
         	f->f_mode |= FMODE_WRITE;
-		dbg(DBG_PRINT,"(GRADING2B)\n");
-    	} else if ((oflags & O_RDWR) && !(oflags & O_WRONLY)){
+		    dbg(DBG_PRINT,"(GRADING2B)\n");
+    	} else if ((oflags & O_RDWR) == O_RDWR && (oflags & O_WRONLY)!=O_WRONLY){
         	f->f_mode |= FMODE_READ | FMODE_WRITE;
-		dbg(DBG_PRINT,"(GRADING2B)\n");
-    	} else if (oflags == O_RDONLY || oflags == (O_RDONLY | O_CREAT)|| oflags == (O_RDONLY | O_APPEND)|| oflags == (O_RDONLY | O_CREAT | O_APPEND)){
-		f->f_mode |= FMODE_READ;
-		dbg(DBG_PRINT,"(GRADING2B)\n");
+		    dbg(DBG_PRINT,"(GRADING2B)\n");
+    	} else if ((oflags & O_RDONLY) == O_RDONLY){
+		    f->f_mode |= FMODE_READ;
+		    dbg(DBG_PRINT,"(GRADING2B)\n");
     }
-//gey vnode for file
+//get vnode for file
         vnode_t *result;
         int msg = open_namev(filename, oflags, &result, NULL);
         if (msg != 0)
