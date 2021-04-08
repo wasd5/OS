@@ -37,7 +37,7 @@
 # all the printout from dbg() statements.
 #
 # If you change this value, you must do "make clean" and "make".
-        GDBWAIT=0
+        GDBWAIT=1
 
 # Set which CS402 tests are to run.  Valid from 0 (no tests except running init)
 # to 10 (run all tests plus student tests).
@@ -63,7 +63,7 @@
 # changed at runtime by modifying the dbg_modes global variable.
 #
 # All debug statements
-        DBG=error,test
+       DBG=error,test
 # Change to this for no debug statements
 #       DBG=-all
 # Change to this to select all the "General" and "VFS" stuff in "kernel/include/util/debug.h"

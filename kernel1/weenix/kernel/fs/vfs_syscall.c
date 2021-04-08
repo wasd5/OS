@@ -292,13 +292,17 @@ do_mknod(const char *path, int mode, unsigned devid)
         dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
         dbg(DBG_PRINT, "(GRADING2B)\n");
         if(retval == -ENOENT){
-                return (res_parent_vnode)->vn_ops->mknod(res_parent_vnode, name, namelen, mode, devid);
+                int ret = (res_parent_vnode)->vn_ops->mknod(res_parent_vnode, name, namelen, mode, devid);
+                vput(res_parent_vnode);
+                return ret;
         }else if(retval == -ENOTDIR){
+                vput(res_parent_vnode);
                 return -ENOTDIR;
-        }else if(retval == 0){
+        }else{
+                vput(res_parent_vnode);
+                vput(res_vnode);
                 return -EEXIST;
         }
-        return 0;
 }
 
 /* Use dir_namev() to find the vnode of the dir we want to make the new
@@ -333,14 +337,21 @@ do_mkdir(const char *path)
         if(retval == -ENOENT){
                 KASSERT(NULL != res_parent_vnode ->vn_ops->mkdir);
                 dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
-                return (res_parent_vnode)->vn_ops->mkdir(res_parent_vnode, name, namelen);
+                int ret = (res_parent_vnode)->vn_ops->mkdir(res_parent_vnode, name, namelen);
+                vput(res_parent_vnode);
+                return ret;
         }else if(retval == -ENOTDIR){
+                vput(res_parent_vnode);
                 return -ENOTDIR;
-        }else if(retval == 0){
+        }else if(retval == -ENAMETOOLONG){
+                vput(res_parent_vnode);
+                return retval;
+        }else{
+                //retval == 0
+                vput(res_parent_vnode);
+                vput(res_vnode);
                 return -EEXIST;
         }
-       
-        return 0;
 }
 
 /* Use dir_namev() to find the vnode of the directory containing the dir to be
@@ -684,16 +695,18 @@ do_stat(const char *path, struct stat *buf)
         vnode_t *res_vnode;
         retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
         if(retval < 0){
+                vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval;
         }else{
                 KASSERT(NULL != res_parent_vnode->vn_ops->stat);
                 dbg(DBG_PRINT, "(GRADING2A 3.f)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return (res_parent_vnode)->vn_ops->stat(res_parent_vnode,buf);
+                int ret = (res_vnode)->vn_ops->stat(res_vnode,buf);
+                vput(res_parent_vnode);
+                vput(res_vnode);
+                dbg(DBG_PRINT, "(GRADING2B)\n"); 
+                return ret;
         }
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        return 0;
 }
 
 #ifdef __MOUNTING__

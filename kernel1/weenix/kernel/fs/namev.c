@@ -47,6 +47,9 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         KASSERT(name != NULL);
         KASSERT(result != NULL);
         dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
+        if(len > NAME_LEN){
+                return -ENAMETOOLONG;
+        }
         if(dir->vn_ops->lookup == NULL){
                 dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return -ENOTDIR;
@@ -54,13 +57,11 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
                 if(len == 0){
                         (*result) = dir;
                         dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
+                        vref(*result);
                         return 0;
                 }
                 dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 int ret = dir->vn_ops->lookup(dir, name, len, result);
-                if(ret == 0){
-                        vref(*result);
-                }
                 return ret;
         }
 
@@ -138,13 +139,17 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                         int retval = lookup(p_vnode, curname, index-start, &c_vnode);
                         dbg(DBG_PRINT, "(GRADING2B)\n");
                         if(retval < 0){
+                                vput(p_vnode);
                                 dbg(DBG_PRINT, "(GRADING2B)\n");
                                 return retval;
                         }else{
-                                dbg(DBG_PRINT, "(GRADING2B)\n");
                                 vput(p_vnode);
                                 p_vnode = c_vnode;
                                 index++;
+                                while(index < pathlen && pathname[index]=='/'){
+                                        index++;
+                                }
+                                dbg(DBG_PRINT, "(GRADING2B)\n");
                         }
                 }
         }
@@ -183,7 +188,6 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
                         KASSERT(NULL != res_parent_vnode->vn_ops->create);
                         dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
                         (res_parent_vnode)->vn_ops->create(res_parent_vnode, name, namelen, res_vnode);
-                        vref(*res_vnode);
                         dbg(DBG_PRINT, "(GRADING2B)\n");
                         return 0;
                 }else{

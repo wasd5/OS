@@ -242,14 +242,14 @@ idleproc_run(int arg1, void *arg2)
          * of the idle and init processes */
         //NOT_YET_IMPLEMENTED("VFS: idleproc_run");
         curproc->p_cwd = vfs_root_vn;
-         vref(vfs_root_vn);
+        vref(vfs_root_vn);
         initthr->kt_proc->p_cwd = vfs_root_vn;
         vref(vfs_root_vn);
         /* Here you need to make the null, zero, and tty devices using mknod */
         /* You can't do this until you have VFS, check the include/drivers/dev.h
          * file for macros with the device ID's you will need to pass to mknod */
         //NOT_YET_IMPLEMENTED("VFS: idleproc_run");
-		do_mkdir("/dev");
+	do_mkdir("/dev");
         
         do_mknod("/dev/null",S_IFCHR,MKDEVID(1,0));
 
