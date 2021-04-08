@@ -109,28 +109,21 @@ do_open(const char *filename, int oflags)
        curproc->p_files[fd] = f;
        f->f_mode = 0;
 //set f_mode
-        switch(oflags & 0x40f)
-    {
-        case O_RDONLY:
-            f->f_mode = FMODE_READ;
-            dbg(DBG_PRINT,"(GRADING2B)\n");
-            break;
-        case O_WRONLY:
-            f->f_mode = FMODE_WRITE;
-            dbg(DBG_PRINT,"(GRADING2B)\n");
-            break;
-        case O_RDWR:
-            f->f_mode = FMODE_READ | FMODE_WRITE;
-            dbg(DBG_PRINT,"(GRADING2B)\n");
-            break;
-        default:
-            break;      
+        if (oflags & O_APPEND){
+        f->f_mode = FMODE_APPEND;
+	dbg(DBG_PRINT,"(GRADING2B)\n");
+    	}
+
+    	if ((oflags & O_WRONLY) && !(oflags & O_RDWR)){
+        	f->f_mode |= FMODE_WRITE;
+		dbg(DBG_PRINT,"(GRADING2B)\n");
+    	} else if ((oflags & O_RDWR) && !(oflags & O_WRONLY)){
+        	f->f_mode |= FMODE_READ | FMODE_WRITE;
+		dbg(DBG_PRINT,"(GRADING2B)\n");
+    	} else if (oflags == O_RDONLY || oflags == (O_RDONLY | O_CREAT)|| oflags == (O_RDONLY | O_APPEND)|| oflags == (O_RDONLY | O_CREAT | O_APPEND)){
+		f->f_mode |= FMODE_READ;
+		dbg(DBG_PRINT,"(GRADING2B)\n");
     }
-    if (oflags & O_APPEND)
-        {
-                f->f_mode = (f->f_mode | FMODE_APPEND);
-                dbg(DBG_PRINT,"(GRADING2B)\n");
-        }
 //gey vnode for file
         vnode_t *result;
         int msg = open_namev(filename, oflags, &result, NULL);

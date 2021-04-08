@@ -472,17 +472,18 @@ do_unlink(const char *path)
 int do_link(const char *from, const char *to)
 {
         // NOT_YET_IMPLEMENTED("VFS: do_link");
-       size_t namelen = 0;
+        size_t namelen = 0;
         const char *name = NULL;
         vnode_t * vnode_from;
         int retval_from = open_namev(from, O_CREAT, &vnode_from, NULL);
-        if(retval_from == 0){
+        /*if(retval_from == 0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval_from;
         }
+*/
         vnode_t *vnode_dir;
         int retval_to = dir_namev(to, &namelen, &name, NULL, &vnode_dir);
-        if (retval_to != 0)
+        if (retval_to != 0 && retval_from == 0)
         {
                 vput(vnode_from);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
