@@ -199,7 +199,6 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
                 return retval;
         }
         retval = lookup(res_parent_vnode, name, namelen, res_vnode);
-        vput(res_parent_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
         if(retval == -ENOENT){
                 if((flag & O_CREAT) == O_CREAT){
@@ -207,14 +206,17 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
                         KASSERT(NULL != res_parent_vnode->vn_ops->create);
                         dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
                         (res_parent_vnode)->vn_ops->create(res_parent_vnode, name, namelen, res_vnode);
+                        vput(res_parent_vnode);
                         dbg(DBG_PRINT, "(GRADING2B)\n");
                         return 0;
                 }else{
                         //no such file or directory
+                        vput(res_parent_vnode);
                         dbg(DBG_PRINT, "(GRADING2B)\n");
                         return -ENOENT;
                 }
         }
+        vput(res_parent_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return retval;
 }

@@ -350,6 +350,16 @@ proc_cleanup(int status)
 
         curproc->p_state = PROC_DEAD;
         curproc->p_status = status;
+        
+        for(int i =0;i<NFILES;i++){
+                if(curproc->p_files!=NULL){
+                        do_close(i);
+                }
+        }
+
+        if(curproc->p_pid != 2){
+                vput(curproc->p_cwd);
+        }
         sched_wakeup_on(&(curproc->p_pproc->p_wait));
 }
 

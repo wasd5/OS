@@ -231,11 +231,12 @@ do_dup2(int ofd, int nfd)
                 return -EBADF;
         }
         if(nfd < 0 || nfd >= NFILES){
+                fput(f);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
         if(curproc->p_files[nfd] != NULL && nfd!=ofd){
-
+                dbg(DBG_PRINT, "(GRADING2B)\n");
                 do_close(nfd);
         }
         if (ofd != nfd)
@@ -243,9 +244,11 @@ do_dup2(int ofd, int nfd)
                 curproc->p_files[nfd] = f;
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return nfd;
-        }
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        return ofd;
+        }else{
+                dbg(DBG_PRINT, "(GRADING2B)\n");
+                fput(f);
+                return ofd;
+        } 
 }
 
 /*
