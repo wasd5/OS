@@ -205,10 +205,11 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
                         //create
                         KASSERT(NULL != res_parent_vnode->vn_ops->create);
                         dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
-                        (res_parent_vnode)->vn_ops->create(res_parent_vnode, name, namelen, res_vnode);
+                        int msg = (res_parent_vnode)->vn_ops->create(res_parent_vnode, name, namelen, res_vnode);
                         vput(res_parent_vnode);
                         dbg(DBG_PRINT, "(GRADING2B)\n");
-                        return 0;
+                        return msg;
+			//for t 3
                 }else{
                         //no such file or directory
                         vput(res_parent_vnode);
