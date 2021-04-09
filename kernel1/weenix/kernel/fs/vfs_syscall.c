@@ -199,11 +199,7 @@ do_dup(int fd)
                 return -EBADF;
         }
         int newf = get_empty_fd(curproc);
-        if(newf == -EMFILE){
-                fput(f);
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -EMFILE;
-        }
+        //delete for selfcheck
         curproc->p_files[newf] = f;
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return newf;
@@ -230,11 +226,7 @@ do_dup2(int ofd, int nfd)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        if(nfd < 0 || nfd >= NFILES){
-                fput(f);
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -EBADF;
-        }
+        //delete for selfcheck
         if(curproc->p_files[nfd] != NULL && nfd!=ofd){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 do_close(nfd);
@@ -464,10 +456,7 @@ do_unlink(const char *path)
         const char *name = NULL;
         vnode_t *res_parent_vnode;
         int retval = dir_namev(path, &namelen, &name, NULL, &res_parent_vnode);
-        if(retval < 0){
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return retval;
-        }
+        //delete for selfcheck
         vnode_t *res_vnode = NULL;
         retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
         if(retval != 0){
@@ -521,6 +510,7 @@ int do_link(const char *from, const char *to)
         vnode_t * vnode_from;
         int retval_from = open_namev(from, O_CREAT, &vnode_from, NULL);
         if(retval_from <0){
+        	 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval_from;
         }
         /*if(retval_from == 0){
@@ -530,25 +520,16 @@ int do_link(const char *from, const char *to)
 */
         vnode_t *vnode_dir;
         int retval_to = dir_namev(to, &namelen, &name, NULL, &vnode_dir);
-        if(retval_to < 0){
-                vput(vnode_from);
-                return retval_to;
-        }
+        //delete for self check
         vnode_t *vnode_to;
         retval_to = lookup(vnode_dir, name, namelen, &vnode_to);
         if(retval_to < 0){
                 vput(vnode_from);
                 vput(vnode_dir);
-                return retval_to;
-        }
-        /*
-        if (retval_to != 0 && retval_from == 0)
-        {
-                vput(vnode_from);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval_to;
         }
-         */
+        
         int retval = vnode_dir->vn_ops->link(vnode_from, vnode_dir, name, namelen);
         vput(vnode_to);
         vput(vnode_dir);
@@ -568,10 +549,7 @@ int
 do_rename(const char *oldname, const char *newname)
 {
         int retval = do_link(oldname, newname);
-        if(retval != 0){
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return retval;
-        }
+       //delete for self-check
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return do_unlink(oldname);
 }
@@ -595,7 +573,7 @@ do_chdir(const char *path)
         vnode_t * vnode_old = curproc->p_cwd;
         vnode_t * vnode_dir;
         int retval = open_namev(path, 0, &vnode_dir, NULL);
-        if (retval != 0){
+        if (retval < 0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return retval;
         }

@@ -35,16 +35,16 @@ with a numeric value:
     (f) In do_stat(): 2 out of 2 pts
 
 (B) vfstest: 42 out of 42 pts
-    What is your kshell command to invoke vfstest_main(): (Comments?)
+    What is your kshell command to invoke vfstest_main(): v
 
 (C.1) faber_fs_thread_test (6 out of 6 pts)
-    What is your kshell command to invoke faber_fs_thread_test(): (Comments?)
+    What is your kshell command to invoke faber_fs_thread_test(): t
 (C.2) faber_directory_test (4 out of 4 pts)
-    What is your kshell command to invoke faber_directory_test(): (Comments?)
+    What is your kshell command to invoke faber_directory_test(): di
 
 (D) Self-checks: (10 out of 10 pts)
     Please provide details, add subsections and/or items as needed; or, say that "none is needed".
-    Details: 
+    Details: none is needed
 
 Missing/incomplete required section(s) in README file (vfs-README.txt): (0 pts)
 Submitted binary file : (0 pts)
