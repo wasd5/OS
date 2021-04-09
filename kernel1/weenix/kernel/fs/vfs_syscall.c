@@ -420,7 +420,7 @@ do_rmdir(const char *path)
         dbg(DBG_PRINT, "(GRADING2A 3.d)\n");
         dbg(DBG_PRINT, "(GRADING2B)\n"); 
 
-        int res = res_parent_vnode->vn_ops->rmdir(res_parent_vnode, path, namelen);
+        int res = res_parent_vnode->vn_ops->rmdir(res_parent_vnode, name, namelen);
         vput(res_parent_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return res;
