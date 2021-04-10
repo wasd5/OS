@@ -92,6 +92,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
  * Note: A successful call to this causes vnode refcount on *res_vnode to
  * be incremented.
  */
+//need to add (middle) KASSERT(NULL != dir_vnode->vn_ops->mknod);
 int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
