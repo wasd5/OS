@@ -273,46 +273,44 @@ do_mknod(const char *path, int mode, unsigned devid)
 {
         //NOT_YET_IMPLEMENTED("VFS: do_mknod");
         //may not need following mode check
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
-        KASSERT(NULL != path);
+        
         if((mode & S_IFCHR)!= S_IFCHR && (mode & S_IFBLK)!= S_IFBLK){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
                 return -EINVAL;
         }
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
+        //dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
         size_t namelen = 0;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
         int retval = dir_namev(path, &namelen, &name, NULL, &res_parent_vnode);
         if(retval < 0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
                 return retval;
         }
         vnode_t *res_vnode;
         retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
         KASSERT(NULL != res_parent_vnode->vn_ops->mknod);
-        dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
+        //dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
         dbg(DBG_PRINT, "(GRADING2B)\n");
         if(retval == -ENOENT){
                 int ret = (res_parent_vnode)->vn_ops->mknod(res_parent_vnode, name, namelen, mode, devid);
                 vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
                 return ret;
         }else if(retval == -ENOTDIR){
                 vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
                 return -ENOTDIR;
         }else{
                 vput(res_parent_vnode);
                 vput(res_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.b)\n");
                 return -EEXIST;
         }
 }
@@ -348,31 +346,31 @@ do_mkdir(const char *path)
         vnode_t *res_vnode;
         retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
+        //dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
         if(retval == -ENOENT){
                 KASSERT(NULL != res_parent_vnode ->vn_ops->mkdir);
                 dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 int ret = (res_parent_vnode)->vn_ops->mkdir(res_parent_vnode, name, namelen);
                 vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 return ret;
         }else if(retval == -ENOTDIR){
                 vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 return -ENOTDIR;
         }else if(retval == -ENAMETOOLONG){
                 vput(res_parent_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 return retval;
         }else{
                 //retval == 0
                 vput(res_parent_vnode);
                 vput(res_vnode);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 return -EEXIST;
         }
 }
