@@ -65,12 +65,12 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
-        dbg(DBG_PRINT, "(GRADING2B)\n");
+        
         if(fd < 0 || fd >= NFILES){
                dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
         }
-        dbg(DBG_PRINT, "(GRADING2B)\n");
+        
         file_t *f = fget(fd);
         if(!f){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
@@ -87,7 +87,7 @@ do_read(int fd, void *buf, size_t nbytes)
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EISDIR;
         }
-        dbg(DBG_PRINT, "(GRADING2B)\n");
+        
         if(nbytes==0){
             fput(f);
             dbg(DBG_PRINT, "(GRADING2B)\n");
@@ -111,7 +111,7 @@ do_read(int fd, void *buf, size_t nbytes)
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
-        dbg(DBG_PRINT, "(GRADING2B)\n");
+        
         if(fd < 0 || fd >= NFILES){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
                 return -EBADF;
@@ -335,16 +335,14 @@ int
 do_mkdir(const char *path)
 {
         //NOT_YET_IMPLEMENTED("VFS: do_mkdir");
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
-        KASSERT(NULL != path);
+       
         size_t namelen = 0;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
         int retval = dir_namev(path, &namelen, &name, NULL, &res_parent_vnode);
         if(retval < 0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 3.c)\n");
                 return retval;
         }
         vnode_t *res_vnode;
