@@ -356,8 +356,44 @@ pframe_fill(pframe_t *pf)
 int
 pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
 {
-        NOT_YET_IMPLEMENTED("VM: pframe_get");
-        return 0;
+        //NOT_YET_IMPLEMENTED("VM: pframe_get");
+        //candidate_result
+        pframe_t *cand_res;
+        cand_res = pframe_get_resident(o, pagenum);
+        //check null or not
+        if(cand_res == NULL){
+                //check call pageoutd and wake it up or not
+                while(pageoutd_needed()&&!pageoutd_target_met()){
+                        pageoutd_wakeup();
+                        sched_sleep_on(&alloc_waitq);
+                }
+                //create new pframe_t and fill it
+                cand_res = pframe_alloc(o, pagenum);
+                int retval = pframe_fill(cand_res);
+                if(retval < 0){
+                        pframe_free(cand_res);
+                        return retval;
+                }else{
+                        /*
+                        while(!pageoutd_target_met()){
+                                pframe_pin(cand_res);
+                                pageoutd_wakeup();
+                                sched_sleep_on(&alloc_waitq);
+                                pframe_unpin(cand_res);
+                        }
+                         */
+                        (*result) = cand_res;
+                        return retval;
+                }
+        }else{
+                //check busy or not
+                while(cand_res->pf_flags == PF_BUSY){
+                        sched_sleep_on(&(cand_res->pf_waitq));
+                        cand_res = pframe_get_resident(o, pagenum);
+                }
+                (*result) = cand_res;
+                return 0;
+        }
 }
 
 /*
@@ -376,7 +412,16 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
 void
 pframe_pin(pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: pframe_pin");
+        //NOT_YET_IMPLEMENTED("VM: pframe_pin");
+        if(pf->pf_pincount == 0){
+                //remove from allocated list
+                list_remove(&(pf->pf_link));
+                nallocated--;
+                //add to pinned list
+                list_insert_tail(&pinned_list, &(pf->pf_link));
+                npinned++;
+        }
+        pf->pf_pincount++;
 }
 
 /*
@@ -392,7 +437,18 @@ pframe_pin(pframe_t *pf)
 void
 pframe_unpin(pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: pframe_unpin");
+        //NOT_YET_IMPLEMENTED("VM: pframe_unpin");
+        pf->pf_pincount--;
+        if(pf->pf_pincount == 0){
+                //remove from allocated list
+                list_remove(&(pf->pf_link));
+                npinned--;
+                //add to pinned list
+                list_insert_tail(&alloc_list, &(pf->pf_link));
+                nallocated++;
+        }
+
+
 }
 
 /*

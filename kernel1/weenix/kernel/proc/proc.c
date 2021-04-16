@@ -479,7 +479,9 @@ do_waitpid(pid_t pid, int options, int *status)
                 while(1){
                         list_iterate_begin(&(curproc->p_children), p, proc_t, p_child_link) {
                                 if (p->p_state == PROC_DEAD) {
-                                        *status = p->p_status;
+                                        if(status!=NULL){
+                                                *status = p->p_status;
+                                        }
                                         pid_t retpid = p->p_pid;
                                         //remove p from curproc->p_children
                                         list_remove(&(p->p_child_link));
