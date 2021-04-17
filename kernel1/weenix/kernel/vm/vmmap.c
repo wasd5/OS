@@ -126,8 +126,15 @@ end:
 vmmap_t *
 vmmap_create(void)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_create");
-        return NULL;
+        //NOT_YET_IMPLEMENTED("VM: vmmap_create");
+        vmmap_t *newvmmap = (vmmap_t *) slab_obj_alloc(vmmap_allocator);
+        if (newvmmap) {
+                //need this?
+                newvmmap->vmm_proc = curproc;
+                //init vmm_list
+                list_init(&newvmmap->vmm_list);
+        }
+        return newvmmap;
 }
 
 /* Removes all vmareas from the address space and frees the
@@ -135,7 +142,12 @@ vmmap_create(void)
 void
 vmmap_destroy(vmmap_t *map)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_destroy");
+        //NOT_YET_IMPLEMENTED("VM: vmmap_destroy");
+        vmarea_t *vma;
+        list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink){
+               list_remove(&vma->vma_plink);
+               vmarea_free(vma);
+        } list_iterate_end();
 }
 
 /* Add a vmarea to an address space. Assumes (i.e. asserts to some extent)
@@ -145,7 +157,16 @@ vmmap_destroy(vmmap_t *map)
 void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_insert");
+        //NOT_YET_IMPLEMENTED("VM: vmmap_insert");
+        //TODO may need combine if overlapped
+        vmarea_t *vma; 
+        list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink){
+                if(vma->vma_start >= newvma->vma_start){
+                        list_insert_before(&vma->vma_plink, &newvma->vma_plink);
+                        return;
+                }
+        } list_iterate_end(); 
+        list_insert_tail(&map->vmm_list, &newvma->vma_plink);
 }
 
 /* Find a contiguous range of free virtual pages of length npages in
@@ -158,8 +179,39 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_find_range");
-        return -1;
+        //NOT_YET_IMPLEMENTED("VM: vmmap_find_range");
+        vmarea_t *vma; 
+        uint32_t  range_start = 0;
+        uint32_t  range_end = 0;
+        if(dir == VMMAP_DIR_LOHI){
+                range_start = ADDR_TO_PN(USER_MEM_LOW);
+                list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink){
+                        range_end = vma->vma_start;
+                        if((range_end - range_start) >=npages){
+                                return range_start;
+                        }
+                        range_start = vma->vma_end;
+                } list_iterate_end();
+                if((ADDR_TO_PN(USER_MEM_HIGH) - range_start) >npages){
+                        return range_start;
+                }else{
+                        return -1;
+                }   
+        }else{
+                range_start = ADDR_TO_PN(USER_MEM_HIGH);
+                list_iterate_reverse(&map->vmm_list, vma, vmarea_t, vma_plink){
+                        range_end = vma->vma_end;
+                        if((range_start - range_end) >=npages){
+                                return range_start - npages;
+                        }
+                        range_start = vma->vma_start;
+                } list_iterate_end();
+                if(range_start - (ADDR_TO_PN(USER_MEM_HIGH)) >= npages){
+                        return range_start - npages;
+                }else{
+                        return -1;
+                }   
+        }
 }
 
 /* Find the vm_area that vfn lies in. Simply scan the address space
@@ -168,7 +220,13 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_lookup");
+        //NOT_YET_IMPLEMENTED("VM: vmmap_lookup");
+        vmarea_t *vma; 
+        list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink){
+                if((vma->vma_start <= vfn) && (vma->vma_end > vfn)){
+                        return vma;
+                }
+        } list_iterate_end();
         return NULL;
 }
 
@@ -179,8 +237,24 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
 vmmap_t *
 vmmap_clone(vmmap_t *map)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_clone");
-        return NULL;
+        //NOT_YET_IMPLEMENTED("VM: vmmap_clone");
+        vmarea_t *vma;
+        vmmap_t *new_vmmap = vmmap_create();
+        if(!new_vmmap){
+                return NULL;
+        }
+        list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink){
+                vmarea_t * cur_vma = vmarea_alloc();
+                cur_vma->vma_start = vma->vma_start;
+                cur_vma->vma_end = vma->vma_end;
+                cur_vma->vma_off = vma->vma_off;
+                cur_vma->vma_prot = vma->vma_prot;
+                cur_vma->vma_flags = vma->vma_flags;
+                cur_vma->vma_vmmap = new_vmmap;
+                list_insert_tail(&new_vmmap->vmm_list, &cur_vma->vma_plink);
+        
+        } list_iterate_end();
+        return new_vmmap;
 }
 
 /* Insert a mapping into the map starting at lopage for npages pages.
@@ -212,8 +286,59 @@ int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_map");
-        return -1;
+        //NOT_YET_IMPLEMENTED("VM: vmmap_map");
+        //TODO: KASSERT
+        vmarea_t * cand_vmarea;
+        // find/create cand_vmarea
+        if(lopage == 0){
+                int retval = vmmap_find_range(map, npages, dir);
+                if(retval < 0){
+                        return retval;
+                }
+                cand_vmarea = vmarea_alloc();
+                cand_vmarea->vma_start = lopage;
+                cand_vmarea->vma_end = lopage + npages;
+                //need off?
+                cand_vmarea->vma_off = off;
+                cand_vmarea->vma_prot = prot;
+                cand_vmarea->vma_flags = flags;
+                cand_vmarea->vma_vmmap = map;
+                vmmap_insert(map, cand_vmarea);
+        }else{
+                cand_vmarea = vmmap_lookup(map, lopage);
+                if(cand_vmarea == NULL){
+                        cand_vmarea = vmarea_alloc();
+                        cand_vmarea->vma_start = lopage;
+                        cand_vmarea->vma_end = lopage + npages;
+                        //need off?
+                        cand_vmarea->vma_off = off;
+                        cand_vmarea->vma_prot = prot;
+                        cand_vmarea->vma_flags = flags;
+                        cand_vmarea->vma_vmmap = map;
+                        vmmap_insert(map, cand_vmarea);
+                }
+        }
+        //KAASERT cand_vmarea not null
+        // get vam_obj in 3 types
+        mmobj_t * vma_obj;
+        if(flags == MAP_PRIVATE){
+                vma_obj = shadow_create();
+        }else{
+                if(file == NULL){
+                        vma_obj = anon_create();
+
+                }else{
+                        // why call mmap
+                        file->vn_ops->mmap(file, cand_vmarea, &vma_obj);
+                }
+        }
+        //map
+        cand_vmarea->vma_obj = vma_obj;
+        //TODO:vma_olink
+        if(new != NULL){
+                *new = cand_vmarea;
+        }
+        return 0;
 }
 
 /*
@@ -259,8 +384,18 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_is_range_empty");
-        return 0;
+        //NOT_YET_IMPLEMENTED("VM: vmmap_is_range_empty");
+        vmarea_t *vma; 
+        list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink){
+                // may be wrong
+                if((vma->vma_start < startvfn+npages) && (vma->vma_end < startvfn)){
+                        return 0;
+                }
+                if(vma->vma_start >= startvfn+npages){
+                        return 1;
+                }
+        } list_iterate_end();
+        return 1;
 }
 
 /* Read into 'buf' from the virtual address space of 'map' starting at
