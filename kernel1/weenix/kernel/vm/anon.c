@@ -71,8 +71,11 @@ anon_init()
 mmobj_t *
 anon_create()
 {
-        NOT_YET_IMPLEMENTED("VM: anon_create");
-        return NULL;
+        //NOT_YET_IMPLEMENTED("VM: anon_create");
+        mmobj_t *new_anon = (mmobj_t *) slab_obj_alloc(anon_allocator);
+        KASSERT(new_anon);
+        new_anon->mmo_refcount = 1;
+        return new_anon;
 }
 
 /* Implementation of mmobj entry points: */
@@ -83,7 +86,10 @@ anon_create()
 static void
 anon_ref(mmobj_t *o)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_ref");
+        //NOT_YET_IMPLEMENTED("VM: anon_ref");
+        KASSERT(o);
+        KASSERT(0 != o->mmo_refcount);
+        o->mmo_refcount++;
 }
 
 /*
@@ -97,7 +103,11 @@ anon_ref(mmobj_t *o)
 static void
 anon_put(mmobj_t *o)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_put");
+        //NOT_YET_IMPLEMENTED("VM: anon_put");
+        KASSERT(o);
+        KASSERT(0 != o->mmo_refcount);
+        o->mmo_refcount--;
+
 }
 
 /* Get the corresponding page from the mmobj. No special handling is
@@ -105,8 +115,9 @@ anon_put(mmobj_t *o)
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_lookuppage");
-        return -1;
+        //NOT_YET_IMPLEMENTED("VM: anon_lookuppage");
+        int retval = pframe_get(o, pagenum, pf);
+        return retval;
 }
 
 /* The following three functions should not be difficult. */
@@ -114,20 +125,24 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 anon_fillpage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_fillpage");
+        //NOT_YET_IMPLEMENTED("VM: anon_fillpage");
+        KASSERT(pframe_is_busy(pf));
+        KASSERT(!pframe_is_pinned(pf));
+        //memset(pf->pf_addr,0,PAGE_SIZE);
+        pframe_pin(pf);
         return 0;
 }
 
 static int
 anon_dirtypage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_dirtypage");
+        //NOT_YET_IMPLEMENTED("VM: anon_dirtypage");
         return -1;
 }
 
 static int
 anon_cleanpage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_cleanpage");
+        //NOT_YET_IMPLEMENTED("VM: anon_cleanpage");
         return -1;
 }
