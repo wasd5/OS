@@ -69,5 +69,37 @@
 void
 handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
-        NOT_YET_IMPLEMENTED("VM: handle_pagefault");
+        //NOT_YET_IMPLEMENTED("VM: handle_pagefault");
+        //check permissions on the vmarea
+        vmarea_t *vma = vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
+        if( vma == NULL ){
+                do_exit(EFAULT);
+                return;
+        }
+        
+        if( vma->vma_prot & PROT_READ && cause == FAULT_PRESENT ){
+                // V = 0 
+                pframe_t *pf;
+                uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;
+                int retval = pframe_lookup(vma->vma_obj, pagenum, 0, &pf);
+                if(retval < 0){
+                        do_exit(EFAULT);
+                        return;
+                }
+                pt_map(curproc->p_pagedir, (uintptr_t)PAGE_ALIGN_DOWN(vaddr), pt_virt_to_phys((uint32_t)pf->pf_addr), PD_PRESENT|PD_USER, PT_PRESENT|PT_USER);
+        }else if( vma->vma_prot & PROT_WRITE && cause == FAULT_WRITE ){
+                // write to R/O
+                pframe_t *pf;
+                uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;
+                int retval = pframe_lookup(vma->vma_obj, pagenum, 1, &pf);
+                if(retval < 0){
+                        do_exit(EFAULT);
+                        return;
+                }
+                pframe_dirty(pf);
+                pt_map(curproc->p_pagedir, (uintptr_t)PAGE_ALIGN_DOWN(vaddr), pt_virt_to_phys((uint32_t)pf->pf_addr), PD_WRITE|PD_PRESENT|PD_USER, PT_WRITE|PT_PRESENT|PT_USER);
+        }else{
+                do_exit(EFAULT);
+                return;
+        }
 }

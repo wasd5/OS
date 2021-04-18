@@ -449,12 +449,24 @@ int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
         //NOT_YET_IMPLEMENTED("VM: vmmap_read");
-         
-        size_t offset = 0;
-        size_t count_left = count;
+        //TODO KASSERT
+        uint32_t offset = 0;
+        uint32_t count_left = count;
         while(count_left > 0){
+                pframe_t *pf;
                 vmarea_t *vma = vmmap_lookup(map, ADDR_TO_PN(vaddr)+ADDR_TO_PN(offset));
-                //pframe * pf = pframe_lookup(vma->vma_obj, )
+                uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;
+                pframe_lookup(vma->vma_obj, pagenum , 0, &pf);
+                uint32_t page_left_size = PAGE_SIZE-PAGE_OFFSET((uint32_t)vaddr+offset);
+                uint32_t cpy_size = 0;
+                if(page_left_size <= count_left){
+                        cpy_size = page_left_size;
+                }else{
+                        cpy_size = count_left;
+                }
+                memcpy((void*)((uint32_t)buf + offset), (void*)((uint32_t)(pf->pf_addr)+PAGE_OFFSET((uint32_t)vaddr+offset)), cpy_size);
+                count_left = count_left - cpy_size;
+                offset = offset + cpy_size; 
         }
         return 0;
 }
@@ -470,6 +482,24 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_write");
+        //NOT_YET_IMPLEMENTED("VM: vmmap_write");
+        uint32_t offset = 0;
+        uint32_t count_left = count;
+        while(count_left > 0){
+                pframe_t *pf;
+                vmarea_t *vma = vmmap_lookup(map, ADDR_TO_PN(vaddr)+ADDR_TO_PN(offset));
+                uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;
+                pframe_lookup(vma->vma_obj, pagenum , 1, &pf);
+                uint32_t page_left_size = PAGE_SIZE-PAGE_OFFSET((uint32_t)vaddr+offset);
+                uint32_t cpy_size = 0;
+                if(page_left_size <= count_left){
+                        cpy_size = page_left_size;
+                }else{
+                        cpy_size = count_left;
+                }
+                memcpy((void*)((uint32_t)(pf->pf_addr)+PAGE_OFFSET((uint32_t)vaddr+offset)), (void*)((uint32_t)buf + offset),cpy_size);
+                count_left = count_left - cpy_size;
+                offset = offset + cpy_size; 
+        }
         return 0;
 }
