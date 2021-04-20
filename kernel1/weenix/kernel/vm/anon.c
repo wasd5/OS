@@ -73,7 +73,8 @@ anon_create()
 {
         //NOT_YET_IMPLEMENTED("VM: anon_create");
         mmobj_t *new_anon = (mmobj_t *) slab_obj_alloc(anon_allocator);
-        KASSERT(new_anon);
+        KASSERT(NULL != new_anon);
+        mmobj_init(new_anon, &anon_mmobj_ops);
         new_anon->mmo_refcount = 1;
         return new_anon;
 }
@@ -87,8 +88,11 @@ static void
 anon_ref(mmobj_t *o)
 {
         //NOT_YET_IMPLEMENTED("VM: anon_ref");
-        KASSERT(o);
-        KASSERT(0 != o->mmo_refcount);
+        KASSERT(NULL != o);
+        KASSERT(0 < o->mmo_refcount);
+        KASSERT(o->mmo_refcount > o->mmo_nrespages);
+        KASSERT(&anon_mmobj_ops == o->mmo_ops);
+        
         o->mmo_refcount++;
 }
 
@@ -106,8 +110,27 @@ anon_put(mmobj_t *o)
         //NOT_YET_IMPLEMENTED("VM: anon_put");
         KASSERT(o);
         KASSERT(0 != o->mmo_refcount);
+        KASSERT(o->mmo_refcount > o->mmo_nrespages);
+        KASSERT(&anon_mmobj_ops == o->mmo_ops);
+        if(o->mmo_refcount-1 == o->mmo_nrespages){
+                pframe_t *pf; 
+                list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink){
+                        while(pframe_is_busy(pf)){
+                                sched_sleep_on(&pf->pf_waitq);
+                        }
+                        if(pframe_is_pinned(pf)){
+                                pframe_unpin(pf);
+                        }
+                        if(pframe_is_dirty(pf)){
+                                pframe_clean(pf);
+                        }
+                        if(!pframe_is_pinned(pf)){
+                                pframe_free(pf);
+                        }
+                } list_iterate_end();
+                slab_obj_free(anon_allocator, 0);
+        }
         o->mmo_refcount--;
-
 }
 
 /* Get the corresponding page from the mmobj. No special handling is
@@ -129,7 +152,9 @@ anon_fillpage(mmobj_t *o, pframe_t *pf)
         KASSERT(pframe_is_busy(pf));
         KASSERT(!pframe_is_pinned(pf));
         //memset(pf->pf_addr,0,PAGE_SIZE);
-        pframe_pin(pf);
+        if(!pframe_is_pinned(pf)){
+                pframe_pin(pf);
+        }
         return 0;
 }
 

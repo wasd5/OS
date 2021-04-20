@@ -268,6 +268,12 @@ proc_create(char *name)
         //assign p_list_link
         list_link_init(&(p->p_list_link));
         list_insert_tail(&_proc_list, &(p->p_list_link));
+
+        //VM
+        p->p_brk = NULL;
+        p->p_start_brk = NULL;
+        p->p_vmmap = vmmap_create();
+        p->p_vmmap->vmm_proc = p;
         //p_child_link in assign parent child relationship
         dbg(DBG_PRINT, "(GRADING1A)\n");
         #ifdef __VFS__
@@ -359,6 +365,10 @@ proc_cleanup(int status)
 
         if(curproc->p_pid != 2){
                 vput(curproc->p_cwd);
+        }
+        //vm
+        if(curproc->p_vmmap !=NULL){
+                vmmap_destroy(curproc->p_vmmap);
         }
         sched_wakeup_on(&(curproc->p_pproc->p_wait));
 }

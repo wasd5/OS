@@ -2,6 +2,7 @@
     "files.associations": {
         "kthread.h": "c",
         "locale": "c",
-        "__locale": "c"
+        "__locale": "c",
+        "syscall.h": "c"
     }
 }

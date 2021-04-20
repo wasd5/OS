@@ -94,7 +94,7 @@ sys_write(write_args_t *arg)
                 return -1;
         }
         buf = page_alloc();
-        if ((err = copy_from_user(buf, kern_args.buf, sizeof(kern_args.nbytes))) < 0){
+        if ((err = copy_from_user(buf, kern_args.buf, kern_args.nbytes)) < 0){
                 curthr->kt_errno = -err;
                 return -1;
         }

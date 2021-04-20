@@ -440,10 +440,10 @@ pframe_unpin(pframe_t *pf)
         //NOT_YET_IMPLEMENTED("VM: pframe_unpin");
         pf->pf_pincount--;
         if(pf->pf_pincount == 0){
-                //remove from allocated list
+                //remove from pinned list
                 list_remove(&(pf->pf_link));
                 npinned--;
-                //add to pinned list
+                //add to allocated list
                 list_insert_tail(&alloc_list, &(pf->pf_link));
                 nallocated++;
         }

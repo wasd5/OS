@@ -545,7 +545,10 @@ int
 do_rename(const char *oldname, const char *newname)
 {
         int retval = do_link(oldname, newname);
-       //delete for self-check
+        if(retval < 0){
+                return retval;
+        }
+        //delete for self-check
         dbg(DBG_PRINT, "(GRADING2B)\n");
         return do_unlink(oldname);
 }

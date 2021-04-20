@@ -77,7 +77,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
                 return;
         }
         
-        if( vma->vma_prot & PROT_READ && cause == FAULT_PRESENT ){
+        if( vma->vma_prot & PROT_READ && ((cause & FAULT_WRITE)!=FAULT_WRITE) ){
                 // V = 0 
                 pframe_t *pf;
                 uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;
@@ -87,7 +87,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
                         return;
                 }
                 pt_map(curproc->p_pagedir, (uintptr_t)PAGE_ALIGN_DOWN(vaddr), pt_virt_to_phys((uint32_t)pf->pf_addr), PD_PRESENT|PD_USER, PT_PRESENT|PT_USER);
-        }else if( vma->vma_prot & PROT_WRITE && cause == FAULT_WRITE ){
+        }else if( vma->vma_prot & PROT_WRITE && cause & FAULT_WRITE ){
                 // write to R/O
                 pframe_t *pf;
                 uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;

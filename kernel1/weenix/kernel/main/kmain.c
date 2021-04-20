@@ -346,6 +346,26 @@ int my_vfs_test(kshell_t *ks, int arg1, char **arg2)
     return 0;
 }
 
+void *
+hello_test(int arg1, void *arg2)
+{
+        char *const argvec[] = { NULL };
+        char *const envvec[] = { NULL };
+        kernel_execve("/usr/bin/hello", argvec, envvec);
+        return 0;
+}
+
+int my_hello_test(kshell_t *ks, int arg1, char **arg2)
+{   
+    int exitstatus = -1;
+    proc_t* p = proc_create("hello_test");
+    kthread_t* kt = kthread_create(p, hello_test, 1, NULL);
+    sched_make_runnable(kt);
+    do_waitpid(p->p_pid, 0, &exitstatus);
+    return 0;   
+}
+
+
 
 /**
  * This function, called by the idle process (within 'idleproc_run'), creates the
@@ -399,6 +419,7 @@ initproc_run(int arg1, void *arg2)
         // kthread_t *kt = kthread_create(p, faber_thread_test, arg1, arg2);
         // sched_make_runnable(kt);
         // return NULL;
+        
         #ifdef __DRIVERS__  // run test processes and threads in terminal
             kshell_add_command("f", my_faber_thread_test, "Execute faber_thread_test().");
             kshell_add_command("s", my_sunghan_test, "Execute sunghan_test().");
@@ -407,9 +428,14 @@ initproc_run(int arg1, void *arg2)
             kshell_add_command("t", faber_fs_thread_test, "Execute faber_fs_thread_test().");
             kshell_add_command("di", faber_directory_test, "Execute faber_directory_test().");
        	    kshell_add_command("v", my_vfs_test, "Execute vfs_test().");
+
+                
+            kshell_add_command("hi", my_hello_test, "Execute hello_test().");
             kshell_t *ks = kshell_create(0);
             while(kshell_execute_next(ks));
             kshell_destroy(ks);
         #endif
+        
+        
         return NULL;
 }
