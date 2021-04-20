@@ -1,2 +1,0 @@
-kernel/api/elf32.c:        curproc->p_vmmap->vmm_proc = curproc;
-kernel/vm/shadowd.c:                                list_iterate_begin(&p->p_vmmap->vmm_list, vma, vmarea_t, vma_plink) {
