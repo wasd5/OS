@@ -439,7 +439,7 @@ void
 proc_thread_exited(void *retval)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
-        proc_cleanup(curproc->p_status);
+        proc_cleanup((int) retval);
         dbg(DBG_PRINT, "(GRADING1A)\n");
         sched_switch();
 }
