@@ -288,7 +288,14 @@ proc_create(char *name)
         	dbg(DBG_PRINT, "(GRADING2A)\n");
    		}
     	#endif
+        #ifdef __VM__
+        p->p_vmmap = vmmap_create();
+        p->p_vmmap->vmm_proc = p;
+        p->p_brk = NULL;
+        p->p_start_brk = NULL;
+        #endif
 
+    dbg(DBG_PRINT, "(GRADING2A)\n");
     	dbg(DBG_PRINT, "(GRADING2A)\n");
 
         return p;
@@ -553,7 +560,9 @@ do_exit(int status)
     //NOT_YET_IMPLEMENTED("PROCS: do_exit");
 
     // this is single thread thus no need for list interate
-    curproc->p_status = status;
-    kthread_exit(curthr->kt_retval);
-    dbg(DBG_PRINT, "(GRADING1C)\n");
+    kthread_t *kt;
+    list_iterate_begin(&(curproc->p_threads), kt, kthread_t, kt_plink){
+            dbg(DBG_PRINT, "(GRADING1C)\n");
+            kthread_cancel(kt, (void *)(status));
+    }list_iterate_end();
 }
