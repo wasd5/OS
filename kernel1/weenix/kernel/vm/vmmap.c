@@ -749,32 +749,45 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
         dbg(DBG_PRINT, "(GRADING3D 1)\n");
         return 0;
         */
-        uint32_t offset = 0;
-        uint32_t count_left = count;
-        while(count_left > 0){
-                pframe_t *pf;
-                vmarea_t *vma;
-                vma = vmmap_lookup(map, ADDR_TO_PN(vaddr)+ADDR_TO_PN(offset)) ;
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) + ADDR_TO_PN(offset) - vma->vma_start;
-                pframe_lookup(vma->vma_obj, pagenum , 1, &pf);
-                
-                uint32_t page_left_size = PAGE_SIZE-PAGE_OFFSET((uint32_t)vaddr+offset);
-                uint32_t cpy_size = 0;
-                void * src = (void*)((uint32_t)(pf->pf_addr)+PAGE_OFFSET((uint32_t)vaddr+offset));
+        size_t remain = count;
+        uint32_t vpn_vaddr = ADDR_TO_PN(vaddr);
+        uint32_t offset_vaddr = PAGE_OFFSET(vaddr);
+        uint32_t cur_addr = (uint32_t)vaddr;
 
-                if(page_left_size <= count_left){
-                        cpy_size = page_left_size;
+        while (remain > 0)
+        {
+
+                if (remain <= PAGE_SIZE && ADDR_TO_PN((uint32_t)vaddr + count) == ADDR_TO_PN(cur_addr))
+                {
+                        uint32_t vpn_cur_addr = ADDR_TO_PN(cur_addr);
+                        vmarea_t *varea = vmmap_lookup(map, vpn_cur_addr);
+                        pframe_t *pframe;
+                        uint32_t pagenum = vpn_cur_addr - varea->vma_start + varea->vma_off;
+                        pframe_lookup(varea->vma_obj, pagenum, 0, &pframe);
+                        void *src = (void *)((uint32_t)(pframe->pf_addr) + PAGE_OFFSET(cur_addr));
+                        memcpy(src, buf, remain);
+                        buf = (void *)((uint32_t)(buf) + remain);
                         dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                }else{
-                        cpy_size = count_left;
-                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                        return 0;
                 }
 
-                memcpy(src, (void*)((uint32_t)buf + offset),cpy_size);
-                pframe_dirty(pf);
-                count_left = count_left - cpy_size;
-                offset = offset + cpy_size; 
+                uint32_t pgremain = PAGE_SIZE - PAGE_OFFSET(cur_addr);
+                uint32_t vpn_cur_addr = ADDR_TO_PN(cur_addr);
+                if (pgremain <= PAGE_SIZE)
+                {
+                        vmarea_t *varea = vmmap_lookup(map, vpn_cur_addr);
+                        pframe_t *pframe;
+                        uint32_t pagenum = vpn_cur_addr - varea->vma_start + varea->vma_off;
+                        pframe_lookup(varea->vma_obj, pagenum, 0, &pframe);
+                        void *src = (void *)((uint32_t)(pframe->pf_addr) + PAGE_OFFSET(cur_addr));
+                        memcpy(src, buf, pgremain);
+                        buf = (void *)((uint32_t)(buf) + pgremain);
+
+                        remain = remain - pgremain;
+                        cur_addr = cur_addr + pgremain;
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                }
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
         }
         dbg(DBG_PRINT, "(GRADING3D 1)\n");
         return 0;

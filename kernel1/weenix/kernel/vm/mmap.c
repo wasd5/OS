@@ -140,6 +140,7 @@ int
 do_munmap(void *addr, size_t len)
 {
         //NOT_YET_IMPLEMENTED("VM: do_munmap");
+        /*
 		uint32_t nadd = ADDR_TO_PN(addr);
         if (len <= 0 || len + USER_MEM_LOW > USER_MEM_HIGH)
         {
@@ -151,6 +152,28 @@ do_munmap(void *addr, size_t len)
                 return -EINVAL;
         }
         int res = vmmap_remove(curproc->p_vmmap, nadd, (len - 1) / PAGE_SIZE + 1);
+        tlb_flush_all();
+        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        return res;
+        */
+	uint32_t pnaddr = ADDR_TO_PN(addr);
+        if (len <= 0 || len > USER_MEM_HIGH || (uint32_t)addr < USER_MEM_LOW || (uint32_t)addr + len > USER_MEM_HIGH)
+        {
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -EINVAL;
+        }
+        int pages;
+        if (len % PAGE_SIZE == 0)
+        {
+                pages = len / PAGE_SIZE;
+                dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        }
+        else
+        {
+                pages = len / PAGE_SIZE + 1;
+                dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        }
+        int res = vmmap_remove(curproc->p_vmmap, pnaddr, pages);
         tlb_flush_all();
         dbg(DBG_PRINT, "(GRADING3D 2)\n");
         return res;

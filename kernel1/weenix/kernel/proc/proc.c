@@ -222,7 +222,7 @@ proc_t *
 proc_create(char *name)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_create");
-        
+        /*
          proc_t *p = (proc_t *)slab_obj_alloc(proc_allocator);
         //memset(p, 0, sizeof(proc_t));
 
@@ -288,6 +288,7 @@ proc_create(char *name)
         	dbg(DBG_PRINT, "(GRADING2A)\n");
    		}
     	#endif
+
         #ifdef __VM__
         p->p_vmmap = vmmap_create();
         p->p_vmmap->vmm_proc = p;
@@ -295,10 +296,77 @@ proc_create(char *name)
         p->p_start_brk = NULL;
         #endif
 
-    dbg(DBG_PRINT, "(GRADING2A)\n");
     	dbg(DBG_PRINT, "(GRADING2A)\n");
 
         return p;
+        */
+	proc_t *pt = (proc_t *)slab_obj_alloc(proc_allocator);
+    pt->p_pid = _proc_getid();
+    KASSERT((PID_IDLE != pt->p_pid) || (list_empty(&_proc_list)));
+    KASSERT((PID_INIT != pt->p_pid)|| (PID_IDLE == curproc->p_pid));
+    dbg(DBG_PRINT, "(GRADING1A 2.a)\n");
+    pt->p_state = PROC_RUNNING;
+    pt->p_pproc = curproc;
+    if(strlen(name)>256)
+    {
+        name[255]='\0'; 
+        dbg(DBG_PRINT, "(GRADING1A)\n");
+    }
+
+    strncpy(pt->p_comm, name,strlen(name));
+    pt->p_comm[strlen(name)] = '\0'; 
+
+    list_init(&(pt->p_threads));
+    list_init(&(pt->p_children));
+    list_link_init(&(pt->p_list_link));
+    list_link_init(&(pt->p_child_link));
+
+    
+    if(pt->p_pid != PID_IDLE)
+    {
+        list_insert_tail(&(curproc->p_children), &(pt->p_child_link));
+        dbg(DBG_PRINT, "(GRADING1A)\n");
+    }
+    list_insert_tail(&_proc_list, &(pt->p_list_link));
+    
+    pt->p_pagedir = pt_create_pagedir();
+    
+    sched_queue_init(&(pt->p_wait));
+    
+    if(pt->p_pid == PID_INIT)
+    {
+        proc_initproc = pt;
+        dbg(DBG_PRINT, "(GRADING1A)\n");
+    }
+    dbg(DBG_PRINT, "(GRADING1A)\n");
+    
+    #ifdef __VFS__
+    int i = 0;
+    for(i = 0; i < NFILES; i++) {
+        pt->p_files[i] = NULL;
+        dbg(DBG_PRINT, "(GRADING2A)\n");
+    }
+
+    pt->p_cwd = NULL;
+    if(pt->p_pid>2)
+    {
+        pt->p_cwd = pt->p_pproc->p_cwd; 
+        if(pt->p_cwd != NULL) {
+                vref(pt->p_cwd);
+                dbg(DBG_PRINT, "(GRADING2A)\n");
+        }
+    }
+    #endif
+
+    #ifdef __VM__
+    pt->p_vmmap = vmmap_create();
+    pt->p_vmmap->vmm_proc = pt;
+    pt->p_brk = NULL;
+    pt->p_start_brk = NULL;
+    #endif
+
+    dbg(DBG_PRINT, "(GRADING2A)\n");
+    return pt;
 }
 
 /**

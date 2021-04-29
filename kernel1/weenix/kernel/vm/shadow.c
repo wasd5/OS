@@ -161,7 +161,7 @@ shadow_put(mmobj_t *o)
  * can overflow the kernel stack when looking down a long shadow chain */
 static int
 shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
-{
+{/*
         mmobj_t *obj = o;
         int flag;
         if (forwrite == 1)
@@ -206,6 +206,52 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 
         dbg(DBG_PRINT, "(GRADING3D 2)\n");
         return flag;
+*/
+		 if (forwrite != 0)
+        {
+                int result = pframe_get(o, pagenum, pf);
+                if (result == 0)
+                {
+                        KASSERT(NULL != (*pf));
+                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                        return 0;
+                }
+                else
+                {
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                        return result;
+                }
+        }
+        mmobj_t *shadow_obj = o;
+        int res;
+        while (shadow_obj->mmo_shadowed)
+        {
+                *pf = pframe_get_resident(shadow_obj, pagenum);
+                if (!*pf)
+                {
+                        shadow_obj = shadow_obj->mmo_shadowed;
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                }
+                else
+                {
+                        KASSERT(NULL != (*pf));
+                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                        return 0;
+                }
+        }
+        res = pframe_lookup(shadow_obj, pagenum, forwrite, pf);
+        if (!res)
+        {
+                KASSERT(NULL != (*pf));
+                KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                return 0;
+        }
+
+        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        return res;
 
 }
 
