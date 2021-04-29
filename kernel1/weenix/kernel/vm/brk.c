@@ -73,6 +73,42 @@
 int
 do_brk(void *addr, void **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: do_brk");
+        //NOT_YET_IMPLEMENTED("VM: do_brk");
+        if(addr == NULL) {
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+            	*ret = curproc->p_brk;
+            	return 0;
+        }
+
+        if(addr < curproc->p_start_brk || (unsigned int)addr > USER_MEM_HIGH) {
+            	dbg(DBG_PRINT, "(GRADING3D 1)\n");
+               	return -ENOMEM;
+        }
+        
+        
+        uint32_t pbrk_end = ADDR_TO_PN(PAGE_ALIGN_UP(curproc->p_brk));
+        uint32_t addr_end = ADDR_TO_PN(PAGE_ALIGN_UP(addr));
+      
+        if (addr_end > pbrk_end)
+        {
+                int success = vmmap_is_range_empty(curproc->p_vmmap, pbrk_end, (addr_end - pbrk_end));
+                if (success == 0)
+                {
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                        return -ENOMEM;
+                }
+                vmarea_t *v = vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(curproc->p_start_brk));
+                v->vma_end = addr_end;
+                curproc->p_brk = addr;
+                *ret = addr;
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                v->vma_end = addr_end;
+                return 0;
+        }
+        
+        curproc->p_brk = addr;
+        *ret = addr;
+        dbg(DBG_PRINT, "(GRADING3D 1)\n");
         return 0;
+        
 }

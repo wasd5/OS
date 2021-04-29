@@ -74,8 +74,24 @@ init_func(syscall_init);
 static int
 sys_read(read_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_read");
-        return -1;
+        write_args_t            kern_args;
+        void                    *buf;
+        int                     err;
+
+        err = copy_from_user(&kern_args, arg, sizeof(read_args_t));         
+        buf = page_alloc();
+        if ((err = do_read(kern_args.fd, buf, kern_args.nbytes)) < 0){
+                page_free(buf);
+                curthr->kt_errno = -err;
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -1;
+        }
+        int reval = copy_to_user(arg->buf, buf, err);
+
+        page_free(buf);
+
+        dbg(DBG_PRINT, "(GRADING3A)\n");
+        return err;
 }
 
 /*
@@ -118,8 +134,33 @@ sys_write(write_args_t *arg)
 static int
 sys_getdents(getdents_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_getdents");
-        return -1;
+        getdents_args_t dent_arg;
+        int reval = copy_from_user(&dent_arg, arg, sizeof(getdents_args_t));
+        dirent_t cur_dirp;
+        reval = copy_from_user(&cur_dirp, arg->dirp, sizeof(dirent_t));
+        unsigned int count = 0;
+        int readed_bytes = 0;
+        while (count < (arg->count / sizeof(dirent_t)))
+        {
+                reval = do_getdent(dent_arg.fd, &cur_dirp);
+                if (reval < 0)
+                {
+                        curthr->kt_errno = -reval;
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                        return -1;
+                }
+                if (reval == 0)
+                {
+                        dbg(DBG_PRINT, "(GRADING3A)\n");
+                        break;
+                }
+                copy_to_user(dent_arg.dirp + count, &cur_dirp, reval);
+                count++;
+                readed_bytes += reval;
+                dbg(DBG_PRINT, "(GRADING3A)\n");
+        }
+        dbg(DBG_PRINT, "(GRADING3A)\n");
+        return readed_bytes;
 }
 
 #ifdef __MOUNTING__
@@ -877,4 +918,3 @@ static int syscall_dispatch(uint32_t sysnum, uint32_t args, regs_t *regs)
                         return -1;
         }
 }
-

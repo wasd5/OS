@@ -207,8 +207,24 @@ kthread_exit(void *retval)
 kthread_t *
 kthread_clone(kthread_t *thr)
 {
-        NOT_YET_IMPLEMENTED("VM: kthread_clone");
-        return NULL;
+        //NOT_YET_IMPLEMENTED("VM: kthread_clone");
+        //return NULL;
+        KASSERT(KT_RUN == thr->kt_state);
+        dbg(DBG_PRINT,"(GRADING3A 8.a)\n");
+        kthread_t *newt = (kthread_t *)slab_obj_alloc(kthread_allocator);
+        newt->kt_kstack = alloc_stack();
+        newt->kt_retval = thr->kt_retval;
+        newt->kt_cancelled = thr->kt_cancelled;
+        newt->kt_wchan = thr->kt_wchan;
+        newt->kt_errno = thr->kt_errno;
+        newt->kt_proc = NULL;
+        newt->kt_state = thr->kt_state;
+        list_link_init(&newt->kt_qlink);
+        list_link_init(&newt->kt_plink);
+
+        KASSERT(KT_RUN == newt->kt_state);
+        dbg(DBG_PRINT,"(GRADING3A 8.a)\n");
+        return newt;
 }
 
 /*

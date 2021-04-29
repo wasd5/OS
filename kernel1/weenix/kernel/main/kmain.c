@@ -420,22 +420,8 @@ initproc_run(int arg1, void *arg2)
         // sched_make_runnable(kt);
         // return NULL;
         
-        #ifdef __DRIVERS__  // run test processes and threads in terminal
-            kshell_add_command("f", my_faber_thread_test, "Execute faber_thread_test().");
-            kshell_add_command("s", my_sunghan_test, "Execute sunghan_test().");
-            kshell_add_command("d", my_sunghan_deadlock_test, "Execute sunghan_deadlock_test().");
-
-            kshell_add_command("t", faber_fs_thread_test, "Execute faber_fs_thread_test().");
-            kshell_add_command("di", faber_directory_test, "Execute faber_directory_test().");
-       	    kshell_add_command("v", my_vfs_test, "Execute vfs_test().");
-
-                
-            kshell_add_command("hi", my_hello_test, "Execute hello_test().");
-            kshell_t *ks = kshell_create(0);
-            while(kshell_execute_next(ks));
-            kshell_destroy(ks);
-        #endif
-        
-        
+        char *argv[] = { NULL};
+        char *envp[] = { NULL };
+        kernel_execve("/sbin/init", argv, envp);
         return NULL;
 }

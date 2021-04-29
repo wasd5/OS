@@ -48,29 +48,30 @@ static slab_allocator_t *shadow_allocator;
 
 static void shadow_ref(mmobj_t *o);
 static void shadow_put(mmobj_t *o);
-static int  shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf);
-static int  shadow_fillpage(mmobj_t *o, pframe_t *pf);
-static int  shadow_dirtypage(mmobj_t *o, pframe_t *pf);
-static int  shadow_cleanpage(mmobj_t *o, pframe_t *pf);
+static int shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf);
+static int shadow_fillpage(mmobj_t *o, pframe_t *pf);
+static int shadow_dirtypage(mmobj_t *o, pframe_t *pf);
+static int shadow_cleanpage(mmobj_t *o, pframe_t *pf);
 
 static mmobj_ops_t shadow_mmobj_ops = {
-        .ref = shadow_ref,
-        .put = shadow_put,
-        .lookuppage = shadow_lookuppage,
-        .fillpage  = shadow_fillpage,
-        .dirtypage = shadow_dirtypage,
-        .cleanpage = shadow_cleanpage
-};
+    .ref = shadow_ref,
+    .put = shadow_put,
+    .lookuppage = shadow_lookuppage,
+    .fillpage = shadow_fillpage,
+    .dirtypage = shadow_dirtypage,
+    .cleanpage = shadow_cleanpage};
 
 /*
  * This function is called at boot time to initialize the
  * shadow page sub system. Currently it only initializes the
  * shadow_allocator object.
  */
-void
-shadow_init()
+void shadow_init()
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_init");
+        // NOT_YET_IMPLEMENTED("VM: shadow_init");
+        shadow_allocator = slab_allocator_create("shadow", sizeof(mmobj_t));
+        KASSERT(shadow_allocator); /* after initialization, shadow_allocator must not be NULL */
+        dbg(DBG_PRINT, "(GRADING3A 6.a)\n");
 }
 
 /*
@@ -82,8 +83,13 @@ shadow_init()
 mmobj_t *
 shadow_create()
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_create");
-        return NULL;
+        // NOT_YET_IMPLEMENTED("VM: shadow_create");
+        // return NULL;
+        mmobj_t *obj = (mmobj_t *)slab_obj_alloc(shadow_allocator);
+        mmobj_init(obj, &shadow_mmobj_ops);
+        obj->mmo_refcount = 1;
+        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+        return obj;
 }
 
 /* Implementation of mmobj entry points: */
@@ -94,7 +100,11 @@ shadow_create()
 static void
 shadow_ref(mmobj_t *o)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_ref");
+        // NOT_YET_IMPLEMENTED("VM: shadow_ref");
+        KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops)); /* the o function argument must be non-NULL, has a positive refcount, and is a shadow object */
+        dbg(DBG_PRINT, "(GRADING3A 6.b)\n");
+        o->mmo_refcount++;
+        dbg(DBG_PRINT, "(GRADING3B 7)\n");
 }
 
 /*
@@ -108,7 +118,36 @@ shadow_ref(mmobj_t *o)
 static void
 shadow_put(mmobj_t *o)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_put");
+        // NOT_YET_IMPLEMENTED("VM: shadow_put");
+        KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops)); /* the o function argument must be non-NULL, has a positive refcount, and is a shadow object */
+        dbg(DBG_PRINT, "(GRADING3A 6.c)\n");
+        if (o->mmo_refcount - 1 == o->mmo_nrespages)
+        {
+                pframe_t *pf;
+                list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink)
+                {
+                        if (pframe_is_pinned(pf))
+                        {
+                                pframe_unpin(pf);
+                                dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                        }
+                        pframe_free(pf);
+                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                }
+                list_iterate_end();
+                o->mmo_refcount--;
+                if (o->mmo_shadowed)
+                {
+                        o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);
+                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                }
+                slab_obj_free(shadow_allocator, o);
+                dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                return;
+        }
+        o->mmo_refcount--;
+        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+        return;
 }
 
 /* This function looks up the given page in this shadow object. The
@@ -123,8 +162,51 @@ shadow_put(mmobj_t *o)
 static int
 shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_lookuppage");
-        return 0;
+        mmobj_t *obj = o;
+        int flag;
+        if (forwrite == 1)
+        {
+                flag = pframe_get(o, pagenum, pf);
+                if (flag == 0)
+                {
+                        KASSERT(NULL != (*pf));
+                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                        return flag;
+                }
+                dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                return flag;
+                
+        }
+        
+        while (obj->mmo_shadowed != NULL)
+        {
+                *pf = pframe_get_resident(obj, pagenum);
+                if (*pf == NULL)
+                {
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                        obj = obj->mmo_shadowed;    
+                }
+                else
+                {
+                        KASSERT(NULL != (*pf));
+                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                        return 0;
+                }
+        }
+        flag = pframe_lookup(obj, pagenum, forwrite, pf);
+        if (flag == 0)
+        {
+                KASSERT(NULL != (*pf));
+                KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                return 0;
+        }
+
+        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        return flag;
+
 }
 
 /* As per the specification in mmobj.h, fill the page frame starting
@@ -141,8 +223,20 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 shadow_fillpage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_fillpage");
-        return 0;
+        KASSERT(pframe_is_busy(pf));
+        KASSERT(!pframe_is_pinned(pf));
+        dbg(DBG_PRINT, "(GRADING3A 6.e)\n");
+        pframe_t *res_pf;
+        int res = shadow_lookuppage(o->mmo_shadowed, pf->pf_pagenum, 0, &res_pf);
+        if (res == 0)
+        {
+                pframe_pin(pf);
+                memcpy(pf->pf_addr, res_pf->pf_addr, PAGE_SIZE);
+                dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                return 0;
+        }
+        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        return res;
 }
 
 /* These next two functions are not difficult. */
