@@ -93,36 +93,27 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
  * be incremented.
  */
 //need to add (middle) KASSERT(NULL != dir_vnode->vn_ops->mknod);
-int
+/*int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
-        //NOT_YET_IMPLEMENTED("VFS: dir_namev");
-        //dbg(DBG_PRINT, "(GRADING2B)\n");
-        KASSERT(NULL != pathname); /* the "pathname" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-        KASSERT(NULL != namelen); /* the "namelen" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-        KASSERT(NULL != name); /* the "name" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-        KASSERT(NULL != res_vnode); /* the "res_vnode" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+        
+        KASSERT(NULL != pathname);  
+        KASSERT(NULL != namelen); 
+        KASSERT(NULL != name); 
+        
+        KASSERT(NULL != res_vnode); 
+        
         vnode_t *p_vnode;
         int index = 0;
         int pathlen = strlen(pathname);
-        if(pathname[0]=='/'){
+        if(pathname != NULL && pathname[0]=='/'){
                 p_vnode = vfs_root_vn;
                 index = 1;
-                //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
         }else if(base==NULL){
-                p_vnode = curproc->p_cwd;
-                //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
+                p_vnode = curproc->p_cwd; 
         }else{
                 p_vnode = base;
-                //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
         }
         vref(p_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
@@ -186,6 +177,109 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         dbg(DBG_PRINT, "(GRADING2B)\n");
        //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
         return 0;
+        
+}
+*/
+int dir_namev(const char *pathname, size_t *namelen, const char **name,
+              vnode_t *base, vnode_t **res_vnode)
+{
+    //NOT_YET_IMPLEMENTED("VFS: dir_namev");
+    KASSERT(NULL != pathname); /* the "pathname" argument must be non-NULL */
+    KASSERT(NULL != namelen); /* the "namelen" argument must be non-NULL */
+    KASSERT(NULL != name); /* the "name" argument must be non-NULL */
+    KASSERT(NULL != res_vnode); /* the "res_vnode" argument must be non-NULL */
+    
+    vnode_t *cur_base;
+    cur_base = base;
+    if (pathname != NULL && pathname[0] == '/')
+    {
+        cur_base = vfs_root_vn;
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+    }
+    else if (base == NULL)
+    {
+        cur_base = curproc->p_cwd;
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+    }
+    // find name and directory
+    int pathlen = strlen(pathname);
+    int start = 0;
+    int end = 0;
+
+    char *tmp_name;
+    size_t tmp_namelen = 0;
+
+    vnode_t *tmp_parent_node = cur_base;
+    vref(tmp_parent_node);
+    KASSERT(NULL != tmp_parent_node); /* pathname resolution must start with a valid directory */
+    dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+    vnode_t *tmp_child_node = NULL;
+    int tmp_reval = 0;
+    if (pathlen == 1 && pathname[0] == '/')
+    {
+        *name = (char *)&pathname[0];
+        *namelen = 0;
+        *res_vnode = tmp_parent_node;
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+        return tmp_reval;
+    }
+    if (pathname[0] != '/')
+    {
+        start = -1;
+        dbg(DBG_PRINT, "(GRADING2B)\n");
+    }
+    while (1)
+    {
+        // start should stop at '/'
+
+        end = start + 1;
+        while (end < pathlen && pathname[end] != '/')
+        {
+            end++;
+            dbg(DBG_PRINT, "(GRADING2B)\n");
+        }
+        tmp_name = (char *)&pathname[start + 1];
+        tmp_namelen = end - start - 1;
+        while (end + 1 < pathlen && pathname[end + 1] == '/')
+        {
+            end++;
+            dbg(DBG_PRINT, "(GRADING2B)\n");
+        }
+
+        if (end < pathlen)
+        {
+            tmp_reval = lookup(tmp_parent_node, tmp_name, tmp_namelen, &tmp_child_node);
+            vput(tmp_parent_node);
+            dbg(DBG_PRINT, "(GRADING2B)\n");
+        }
+        if (tmp_reval < 0)
+        {
+            dbg(DBG_PRINT, "(GRADING2B)\n");
+            return tmp_reval;
+        }
+        if (!S_ISDIR(tmp_parent_node->vn_mode))
+        {
+            vput(tmp_child_node);
+            dbg(DBG_PRINT, "(GRADING2B)\n");
+            return -ENOTDIR;
+        }
+        if (end >= pathlen)
+        {
+            *name = tmp_name;
+            *namelen = tmp_namelen;
+            *res_vnode = tmp_parent_node;
+            dbg(DBG_PRINT, "(GRADING2B)\n");
+            break;
+        }
+        else
+        {
+            tmp_parent_node = tmp_child_node;
+            start = end;
+            dbg(DBG_PRINT, "(GRADING2B)\n");
+        }
+    }
+    dbg(DBG_PRINT, "(GRADING2A)\n");
+    return 0;
 }
 
 /* This returns in res_vnode the vnode requested by the other parameters.

@@ -448,33 +448,32 @@ do_rmdir(const char *path)
 int
 do_unlink(const char *path)
 {
-        size_t namelen = 0;
-        const char *name = NULL;
-        vnode_t *res_parent_vnode;
+        size_t namelen = NULL;
+        const char *name = "";
+        vnode_t *res_parent_vnode = NULL;
         int retval = dir_namev(path, &namelen, &name, NULL, &res_parent_vnode);
-        //delete for selfcheck
-        vnode_t *res_vnode = NULL;
-        retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
-        if(retval != 0){
-                vput(res_parent_vnode);
-                dbg(DBG_PRINT, "(GRADING2B)\n");  
+        if (retval != 0)
+        {
                 return retval;
         }
-        if (S_ISDIR(res_vnode->vn_mode)){
+        vnode_t *res_vnode = NULL;
+        retval = lookup(res_parent_vnode, name, namelen, &res_vnode);
+        if (retval == 0)
+        {
+                if (S_ISDIR(res_vnode->vn_mode))
+                {
+                        vput(res_vnode);
+                        vput(res_parent_vnode);
+                        return -EPERM;
+                }
+                KASSERT(NULL != res_parent_vnode->vn_ops->unlink);
+                retval = res_parent_vnode->vn_ops->unlink(res_parent_vnode, name, namelen);
                 vput(res_vnode);
                 vput(res_parent_vnode);
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -EPERM;
+                return retval;
         }
-        KASSERT(NULL != res_parent_vnode->vn_ops->unlink);
-        dbg(DBG_PRINT, "(GRADING2A 3.e)\n");
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        retval = res_parent_vnode->vn_ops->unlink(res_parent_vnode, name, namelen);
-        vput(res_vnode);
-        vput(res_parent_vnode);
-        dbg(DBG_PRINT, "(GRADING2B)\n");
+        vput(res_parent_vnode); 
         return retval;
-        
 }
 
 /* To link:
@@ -503,35 +502,51 @@ int do_link(const char *from, const char *to)
         // NOT_YET_IMPLEMENTED("VFS: do_link");
         size_t namelen = 0;
         const char *name = NULL;
-        vnode_t * vnode_from;
+        vnode_t *vnode_from, *to_vnode, *vnode_dir;
         int retval_from = open_namev(from, O_CREAT, &vnode_from, NULL);
-        if(retval_from <0){
-        	 dbg(DBG_PRINT, "(GRADING2B)\n");
-                return retval_from;
-        }
-        /*if(retval_from == 0){
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return retval_from;
-        }
-*/
-        vnode_t *vnode_dir;
         int retval_to = dir_namev(to, &namelen, &name, NULL, &vnode_dir);
-        //delete for self check
-        vnode_t *vnode_to;
-        retval_to = lookup(vnode_dir, name, namelen, &vnode_to);
-        if(retval_to < 0){
-                vput(vnode_from);
+        if(retval_from && retval_to){
+                return retval_from;
+        }
+        else if(retval_from && !retval_to)
+        {
                 vput(vnode_dir);
-                dbg(DBG_PRINT, "(GRADING2B)\n");
+                return retval_from;
+        }
+        else if (retval_to && !retval_from)
+        {
+                vput(vnode_from);
                 return retval_to;
         }
-        
-        int retval = vnode_dir->vn_ops->link(vnode_from, vnode_dir, name, namelen);
-        vput(vnode_to);
-        vput(vnode_dir);
+        if (S_ISDIR(vnode_from->vn_mode))
+        {
+                vput(vnode_from);
+                vput(vnode_dir);
+                return -EPERM;
+        }
+        if (namelen == 0)
+        {
+                vput(vnode_from);
+                vput(vnode_dir);
+                return -EEXIST;
+        }
+        retval_to = lookup(vnode_dir, name, namelen, &to_vnode);
+        if (retval_to == 0)
+        {
+                vput(vnode_from);
+                vput(vnode_dir);
+                vput(to_vnode);
+                return -EEXIST;
+        }
+        if(retval_to == -ENAMETOOLONG) {
+                vput(vnode_from);
+                vput(vnode_dir);
+                return retval_to;
+        }
+        retval_to = vnode_dir->vn_ops->link(vnode_from, vnode_dir, name, namelen);
         vput(vnode_from);
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        return retval;
+        vput(vnode_dir);
+        return retval_to;
 }
 /*      o link newname to oldname
  *      o unlink oldname

@@ -371,8 +371,8 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
                 cand_res = pframe_alloc(o, pagenum);
                 int retval = pframe_fill(cand_res);
                 if(retval < 0){
-                		dbg(DBG_PRINT, "(GRADING3D 2)\n");
                         pframe_free(cand_res);
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
                         return retval;
                 }else{
                         /*
@@ -383,10 +383,11 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
                                 pframe_unpin(cand_res);
                         }
                          */
-                		KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
-                		KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
-                		dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
+
                         (*result) = cand_res;
+                        KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
+                        KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
+                        dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
                         return retval;
                 }
         }else{
@@ -396,10 +397,10 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
                         cand_res = pframe_get_resident(o, pagenum);
                         dbg(DBG_PRINT, "(GRADING3B 7)\n");
                 }
-                KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
-        		KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
-        		dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
                 (*result) = cand_res;
+                KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
+                KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
+                dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
                 return 0;
         }
 }
