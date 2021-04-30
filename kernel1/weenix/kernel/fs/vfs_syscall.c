@@ -217,30 +217,22 @@ do_dup(int fd)
 int
 do_dup2(int ofd, int nfd)
 {
-       if (ofd < 0 || ofd >= NFILES){
-                dbg(DBG_PRINT, "(GRADING2B)\n");
+       if (ofd < 0 || ofd >= NFILES || nfd < 0 || nfd >= NFILES)
+        {
                 return -EBADF;
         }
-        file_t *f = fget(ofd);
-        if (!f){
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                return -EBADF;
-        }
-        //delete for selfcheck
-        if(curproc->p_files[nfd] != NULL && nfd!=ofd){
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                do_close(nfd);
+        if (curproc->p_files[ofd] == NULL)
+        {
+		       return -EBADF;
         }
         if (ofd != nfd)
         {
-                curproc->p_files[nfd] = f;
-                dbg(DBG_PRINT, "(GRADING2B)\n");
+                file_t *file = fget(ofd);
+                curproc->p_files[nfd] = file;
+                
                 return nfd;
-        }else{
-                dbg(DBG_PRINT, "(GRADING2B)\n");
-                fput(f);
-                return ofd;
-        } 
+        }
+        return ofd;
 }
 
 /*
