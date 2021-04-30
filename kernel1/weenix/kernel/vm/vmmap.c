@@ -330,9 +330,13 @@ int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
 {
-        //NOT_YET_IMPLEMENTED("VM: vmmap_map");
-        //TODO: KASSERT
-    /*
+        KASSERT(NULL != map);                                                       /* must not add a memory segment into a non-existing vmmap */
+        KASSERT(0 < npages);                                                        /* number of pages of this memory segment cannot be 0 */
+        KASSERT((MAP_SHARED & flags) || (MAP_PRIVATE & flags));                     /* must specify whether the memory segment is shared or private */
+        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_LOW) <= lopage));             /* if lopage is not zero, it must be a user space vpn */
+        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages))); /* if lopage is not zero, the specified page range must lie completely within the user space */
+        KASSERT(PAGE_ALIGNED(off));                                                 /* the off argument must be page aligned */
+        dbg(DBG_PRINT, "(GRADING3A 3.d)\n");
         vmarea_t * cand_vmarea;
         // find/create cand_vmarea
         if(lopage == 0){
@@ -386,94 +390,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
                 *new = cand_vmarea;
         }
         return 0;
-        */
-    KASSERT(NULL != map);                                                       /* must not add a memory segment into a non-existing vmmap */
-        KASSERT(0 < npages);                                                        /* number of pages of this memory segment cannot be 0 */
-        KASSERT((MAP_SHARED & flags) || (MAP_PRIVATE & flags));                     /* must specify whether the memory segment is shared or private */
-        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_LOW) <= lopage));             /* if lopage is not zero, it must be a user space vpn */
-        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages))); /* if lopage is not zero, the specified page range must lie completely within the user space */
-        KASSERT(PAGE_ALIGNED(off));                                                 /* the off argument must be page aligned */
-        dbg(DBG_PRINT, "(GRADING3A 3.d)\n");
-        vmarea_t *vmarea = vmarea_alloc();
-        vmarea->vma_prot = prot;
-        vmarea->vma_flags = flags;
-        vmarea->vma_off = ADDR_TO_PN(off);
-        list_init(&vmarea->vma_plink);
-        list_init(&vmarea->vma_olink);
-        if (lopage == 0)
-        {
-                int startvfn = vmmap_find_range(map, npages, dir);
-                if (startvfn != -1)
-                {
-                        vmarea->vma_start = startvfn;
-                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-                }
-                else
-                {
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                        return -ENOMEM;
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        else
-        {
-                if (vmmap_is_range_empty(map, lopage, npages))
-                {
-                        vmarea->vma_start = lopage;
-                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-                }
-                else
-                {
-                        vmmap_remove(map, lopage, npages);
-                        vmarea->vma_start = lopage;
-                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        vmarea->vma_end = vmarea->vma_start + npages;
-
-        if (file == NULL)
-        {
-                if (MAP_PRIVATE & flags)
-                {
-                        vmarea->vma_obj = shadow_create();
-                        vmarea->vma_obj->mmo_un.mmo_bottom_obj = anon_create();
-                        vmarea->vma_obj->mmo_shadowed = vmarea->vma_obj->mmo_un.mmo_bottom_obj;
-                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
-                }
-                else
-                {
-                        vmarea->vma_obj = anon_create();
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        else
-        {
-                if (MAP_PRIVATE & flags)
-                {
-                        vmarea->vma_obj = shadow_create();
-                        file->vn_ops->mmap(file, vmarea, &(vmarea->vma_obj->mmo_un.mmo_bottom_obj));
-                        vmarea->vma_obj->mmo_shadowed = vmarea->vma_obj->mmo_un.mmo_bottom_obj;
-                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
-                }
-                else
-                {
-                        file->vn_ops->mmap(file, vmarea, &(vmarea->vma_obj));
-                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-
-        if (new)
-        {
-
-                *new = vmarea;
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        vmmap_insert(map, vmarea);
-        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        return 0;
+        
 }
 
 /*
@@ -508,8 +425,6 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
-        //NOT_YET_IMPLEMENTED("VM: vmmap_remove");
-    /*
         vmarea_t *vma; 
         list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink){
                 if(vma->vma_start >= lopage + npages){
@@ -562,88 +477,6 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
                         continue;
                 }
         } list_iterate_end();
-        return 0;
-        */
-    vmarea_t *vma;
-        list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink)
-        {
-                if(vma->vma_start >= lopage + npages){
-                        return 0;
-                }
-                if (vma->vma_start < lopage && vma->vma_end > lopage + npages)
-                {
-                        // case 1
-                        vmarea_t *new_vma = vmarea_alloc();
-
-                        new_vma->vma_start = lopage + npages;
-                        new_vma->vma_end = vma->vma_end;
-                        vma->vma_end = lopage;
-
-                        new_vma->vma_off = vma->vma_off + lopage + npages - vma->vma_start;
-                        new_vma->vma_prot = vma->vma_prot;
-                        new_vma->vma_flags = vma->vma_flags;
-                        new_vma->vma_vmmap = vma->vma_vmmap;
-
-                        list_link_init(&new_vma->vma_olink);
-                        list_link_init(&new_vma->vma_plink);
-
-                        vmarea_t *next_vma = list_item(vma->vma_plink.l_next, vmarea_t, vma_plink);
-                        list_insert_tail(&next_vma->vma_plink, &new_vma->vma_plink);
-
-                        if (vma->vma_obj != NULL)
-                        {
-                                
-                                vma->vma_obj->mmo_ops->ref(vma->vma_obj);
-                                dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                        }
-                        list_insert_tail(mmobj_bottom_vmas(vma->vma_obj), &new_vma->vma_olink);
-                        mmobj_t *vma_shadowed = shadow_create();
-                        mmobj_t *new_vma_shadowed = shadow_create();
-                        vma_shadowed->mmo_shadowed = vma->vma_obj;
-                        new_vma_shadowed->mmo_shadowed = vma->vma_obj;
-                        vma_shadowed->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(vma->vma_obj);
-                        new_vma_shadowed->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(vma->vma_obj);
-                        vma->vma_obj = vma_shadowed;
-                        new_vma->vma_obj = new_vma_shadowed;
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                }
-                else if (vma->vma_start < lopage && vma->vma_end <= lopage + npages && vma->vma_end > lopage)
-                {
-                        // case 2
-                        
-                        vma->vma_end = lopage;
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                }
-                else if (lopage <= vma->vma_start && lopage + npages < vma->vma_end && lopage + npages > vma->vma_start)
-                {
-                        //case 3
-                        
-                        vma->vma_off = vma->vma_off + lopage + npages - vma->vma_start;
-                        vma->vma_start = lopage + npages;
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                }
-                else if (lopage <= vma->vma_start && lopage + npages >= vma->vma_end)
-                {
-                        //case 4
-     
-                        if (vma->vma_obj != NULL)
-                        {
-                                vma->vma_obj->mmo_ops->put(vma->vma_obj);
-                                dbg(DBG_PRINT, "(GRADING3A)\n");
-                        }
-                        vma->vma_obj = NULL;
-                        list_remove(&vma->vma_plink);
-
-                        list_remove(&vma->vma_olink);
-                        vmarea_free(vma);
-                        dbg(DBG_PRINT, "(GRADING3A)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3A)\n");
-        }
-        list_iterate_end();
-        
-        pt_unmap_range(curproc->p_pagedir, (uintptr_t)PN_TO_ADDR(lopage), (uintptr_t)PN_TO_ADDR(lopage + npages));
-        dbg(DBG_PRINT, "(GRADING3A)\n");
         return 0;
 }
 
@@ -724,8 +557,7 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
-        //NOT_YET_IMPLEMENTED("VM: vmmap_write");
-        /*uint32_t offset = 0;
+        uint32_t offset = 0;
         uint32_t count_left = count;
         while(count_left > 0){
                 pframe_t *pf;
@@ -747,49 +579,6 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
                 pframe_dirty(pf);
                 count_left = count_left - cpy_size;
                 offset = offset + cpy_size; 
-        }
-        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-        return 0;
-        */
-        size_t remain = count;
-        uint32_t vpn_vaddr = ADDR_TO_PN(vaddr);
-        uint32_t offset_vaddr = PAGE_OFFSET(vaddr);
-        uint32_t cur_addr = (uint32_t)vaddr;
-
-        while (remain > 0)
-        {
-
-                if (remain <= PAGE_SIZE && ADDR_TO_PN((uint32_t)vaddr + count) == ADDR_TO_PN(cur_addr))
-                {
-                        uint32_t vpn_cur_addr = ADDR_TO_PN(cur_addr);
-                        vmarea_t *varea = vmmap_lookup(map, vpn_cur_addr);
-                        pframe_t *pframe;
-                        uint32_t pagenum = vpn_cur_addr - varea->vma_start + varea->vma_off;
-                        pframe_lookup(varea->vma_obj, pagenum, 0, &pframe);
-                        void *src = (void *)((uint32_t)(pframe->pf_addr) + PAGE_OFFSET(cur_addr));
-                        memcpy(src, buf, remain);
-                        buf = (void *)((uint32_t)(buf) + remain);
-                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                        return 0;
-                }
-
-                uint32_t pgremain = PAGE_SIZE - PAGE_OFFSET(cur_addr);
-                uint32_t vpn_cur_addr = ADDR_TO_PN(cur_addr);
-                if (pgremain <= PAGE_SIZE)
-                {
-                        vmarea_t *varea = vmmap_lookup(map, vpn_cur_addr);
-                        pframe_t *pframe;
-                        uint32_t pagenum = vpn_cur_addr - varea->vma_start + varea->vma_off;
-                        pframe_lookup(varea->vma_obj, pagenum, 0, &pframe);
-                        void *src = (void *)((uint32_t)(pframe->pf_addr) + PAGE_OFFSET(cur_addr));
-                        memcpy(src, buf, pgremain);
-                        buf = (void *)((uint32_t)(buf) + pgremain);
-
-                        remain = remain - pgremain;
-                        cur_addr = cur_addr + pgremain;
-                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
         }
         dbg(DBG_PRINT, "(GRADING3D 1)\n");
         return 0;
