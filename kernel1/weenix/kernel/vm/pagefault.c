@@ -73,32 +73,45 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         //check permissions on the vmarea
         vmarea_t *vma = vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
         if( vma == NULL ){
+                dbg(DBG_PRINT, "(GRADING3D 5)\n");
                 do_exit(EFAULT);
                 return;
         }
-        
+        pframe_t *pf;
         if( vma->vma_prot & PROT_READ && ((cause & FAULT_WRITE)!=FAULT_WRITE) ){
                 // V = 0 
-                pframe_t *pf;
+        
                 uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;
                 int retval = pframe_lookup(vma->vma_obj, pagenum, 0, &pf);
                 if(retval < 0){
+                        dbg(DBG_PRINT, "(GRADING3D 5)\n");
                         do_exit(EFAULT);
                         return;
                 }
+                KASSERT(pf); /* this page frame must be non-NULL */
+                dbg(DBG_PRINT, "(GRADING3A 5.a)\n");
+                KASSERT(pf->pf_addr); /* this page frame's pf_addr must be non-NULL */
+                dbg(DBG_PRINT, "(GRADING3A 5.a)\n");
+
                 pt_map(curproc->p_pagedir, (uintptr_t)PAGE_ALIGN_DOWN(vaddr), pt_virt_to_phys((uint32_t)pf->pf_addr), PD_PRESENT|PD_USER, PT_PRESENT|PT_USER);
         }else if( vma->vma_prot & PROT_WRITE && cause & FAULT_WRITE ){
                 // write to R/O
-                pframe_t *pf;
                 uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) - vma->vma_start;
                 int retval = pframe_lookup(vma->vma_obj, pagenum, 1, &pf);
                 if(retval < 0){
+                        dbg(DBG_PRINT, "(GRADING3D 5)\n");
                         do_exit(EFAULT);
                         return;
                 }
+                KASSERT(pf); /* this page frame must be non-NULL */
+                dbg(DBG_PRINT, "(GRADING3A 5.a)\n");
+                KASSERT(pf->pf_addr); /* this page frame's pf_addr must be non-NULL */
+                dbg(DBG_PRINT, "(GRADING3A 5.a)\n");
+
                 pframe_dirty(pf);
                 pt_map(curproc->p_pagedir, (uintptr_t)PAGE_ALIGN_DOWN(vaddr), pt_virt_to_phys((uint32_t)pf->pf_addr), PD_WRITE|PD_PRESENT|PD_USER, PT_WRITE|PT_PRESENT|PT_USER);
         }else{
+                dbg(DBG_PRINT, "(GRADING3D 5)\n");
                 do_exit(EFAULT);
                 return;
         }

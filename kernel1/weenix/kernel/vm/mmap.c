@@ -53,79 +53,63 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         int fd, off_t off, void **ret)
 {
         //NOT_YET_IMPLEMENTED("VM: do_mmap");
+        int retval;
+        vmarea_t *vm;
+        if (addr == NULL){
+        	if((flags & MAP_FIXED)){
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -EINVAL;
+            }
+        }else{
+        	if((uint32_t)addr < USER_MEM_LOW || (uint32_t)addr + len > USER_MEM_HIGH){
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -EINVAL;
+            }
+        }
         if (!((flags & MAP_SHARED) || (flags & MAP_PRIVATE) || (flags & MAP_ANON) || (flags & MAP_FIXED)))
         {
                 dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return -EINVAL;
         }
-
-        if (!PAGE_ALIGNED(off))
+        if (!PAGE_ALIGNED(off) || len <= 0 || len > USER_MEM_HIGH - USER_MEM_LOW)
         {
                 dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return -EINVAL;
         }
-        if (addr == NULL && (flags & MAP_FIXED))
-        {
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                return -EINVAL;
+        
+        if(!(MAP_ANON & flags)){
+                if ((fd < 0 || fd >= NFILES) || !curproc->p_files[fd])
+                {
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                        return -EBADF;
+                }else if((flags & MAP_SHARED) && (prot & PROT_WRITE) && !(curproc->p_files[fd]->f_mode & FMODE_WRITE))
+                {
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                        return -EACCES;
+                }
         }
-
-        if (addr != NULL && ((uint32_t)addr < USER_MEM_LOW || (uint32_t)addr + len > USER_MEM_HIGH))
-        {
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                return -EINVAL;
-        }
-
-        if (len <= 0 || len > USER_MEM_HIGH - USER_MEM_LOW)
-        {
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                return -EINVAL;
-        }
-
-        if ((fd < 0 || fd >= NFILES) && !(MAP_ANON & flags))
-        {
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                return -EBADF;
-        }
-
-        if (curproc->p_files[fd] == NULL && !(MAP_ANON & flags))
-        {
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                return -EBADF;
-        }
-        file_t *cur_file = curproc->p_files[fd];
-
-        if (!(flags & MAP_ANON) && (flags & MAP_SHARED) && (prot & PROT_WRITE) && !(curproc->p_files[fd]->f_mode & FMODE_WRITE))
-        {
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                return -EACCES;
-        }
-
-        vnode_t *cur_vnode = cur_file->f_vnode;
+        vnode_t *cur_vnode = curproc->p_files[fd]->f_vnode;
         if (flags & MAP_ANON)
         { 
                 cur_vnode = NULL;
                 dbg(DBG_PRINT, "(GRADING3D 2)\n");
-        }
-        else
-        {
+        }else{
                 cur_vnode = curproc->p_files[fd]->f_vnode;
                 dbg(DBG_PRINT, "(GRADING3A)\n");
         }
-
-        int reval;
-        vmarea_t *res_vma;
-        reval = vmmap_map(curproc->p_vmmap, cur_vnode, ADDR_TO_PN((uint32_t)addr), (uint32_t)ADDR_TO_PN(PAGE_ALIGN_UP(len)),
-                          prot, flags, off, VMMAP_DIR_HILO, &res_vma);
-        if (reval >= 0)
-        {
-                *ret = PN_TO_ADDR(res_vma->vma_start);
-                tlb_flush_all();
-                dbg(DBG_PRINT, "(GRADING3A)\n");
+        retval = vmmap_map(curproc->p_vmmap, cur_vnode, ADDR_TO_PN((uint32_t)addr), (uint32_t)ADDR_TO_PN(PAGE_ALIGN_UP(len)),
+                          prot, flags, off, VMMAP_DIR_HILO, &vm);
+        if (retval < 0)
+        {   
+                KASSERT(NULL != curproc->p_pagedir); 
+                dbg(DBG_PRINT, "(GRADING3A 2.a)\n");
+                return retval;
+                
         }
-        KASSERT(NULL != curproc->p_pagedir); /* page table must be valid after a memory segment is mapped into the address space */
-        dbg(DBG_PRINT, "(GRADING3A 2.a)\n");
-        return reval;
+        *ret = PN_TO_ADDR(vm->vma_start);
+        tlb_flush_all();
+        dbg(DBG_PRINT, "(GRADING3A)\n");
+        return retval;
 }
 
 
@@ -138,44 +122,23 @@ do_mmap(void *addr, size_t len, int prot, int flags,
  */
 int
 do_munmap(void *addr, size_t len)
-{
-        //NOT_YET_IMPLEMENTED("VM: do_munmap");
-        /*
-		uint32_t nadd = ADDR_TO_PN(addr);
-        if (len <= 0 || len + USER_MEM_LOW > USER_MEM_HIGH)
-        {
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                return -EINVAL;
-        }
+{       
+
         if((uint32_t)addr < USER_MEM_LOW || (uint32_t)addr + len > USER_MEM_HIGH){
-        		dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return -EINVAL;
         }
-        int res = vmmap_remove(curproc->p_vmmap, nadd, (len - 1) / PAGE_SIZE + 1);
-        tlb_flush_all();
-        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-        return res;
-        */
-	uint32_t pnaddr = ADDR_TO_PN(addr);
-        if (len <= 0 || len > USER_MEM_HIGH || (uint32_t)addr < USER_MEM_LOW || (uint32_t)addr + len > USER_MEM_HIGH)
+        if (len <= 0 || len > USER_MEM_HIGH || len > (USER_MEM_HIGH - USER_MEM_LOW))
         {
                 dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return -EINVAL;
         }
-        int pages;
-        if (len % PAGE_SIZE == 0)
-        {
-                pages = len / PAGE_SIZE;
-                dbg(DBG_PRINT, "(GRADING3D 2)\n");
-        }
-        else
-        {
-                pages = len / PAGE_SIZE + 1;
-                dbg(DBG_PRINT, "(GRADING3D 2)\n");
-        }
-        int res = vmmap_remove(curproc->p_vmmap, pnaddr, pages);
+        
+        int p = (len - 1) / PAGE_SIZE + 1;
+        int res = vmmap_remove(curproc->p_vmmap, ADDR_TO_PN(addr), p);
         tlb_flush_all();
         dbg(DBG_PRINT, "(GRADING3D 2)\n");
         return res;
 }
 
+// if (len <= 0 || len > USER_MEM_HIGH || (uint32_t)addr < USER_MEM_LOW || (uint32_t)addr + len > USER_MEM_HIGH)

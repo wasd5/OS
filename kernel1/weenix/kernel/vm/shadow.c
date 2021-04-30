@@ -84,11 +84,10 @@ mmobj_t *
 shadow_create()
 {
         // NOT_YET_IMPLEMENTED("VM: shadow_create");
-        // return NULL;
+        dbg(DBG_PRINT, "(GRADING3B 7)\n");
         mmobj_t *obj = (mmobj_t *)slab_obj_alloc(shadow_allocator);
         mmobj_init(obj, &shadow_mmobj_ops);
         obj->mmo_refcount = 1;
-        dbg(DBG_PRINT, "(GRADING3B 7)\n");
         return obj;
 }
 
@@ -103,8 +102,8 @@ shadow_ref(mmobj_t *o)
         // NOT_YET_IMPLEMENTED("VM: shadow_ref");
         KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops)); /* the o function argument must be non-NULL, has a positive refcount, and is a shadow object */
         dbg(DBG_PRINT, "(GRADING3A 6.b)\n");
-        o->mmo_refcount++;
         dbg(DBG_PRINT, "(GRADING3B 7)\n");
+        o->mmo_refcount++;
 }
 
 /*
@@ -121,26 +120,21 @@ shadow_put(mmobj_t *o)
         // NOT_YET_IMPLEMENTED("VM: shadow_put");
         KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops)); /* the o function argument must be non-NULL, has a positive refcount, and is a shadow object */
         dbg(DBG_PRINT, "(GRADING3A 6.c)\n");
+        pframe_t *p;
         if (o->mmo_refcount - 1 == o->mmo_nrespages)
         {
-                pframe_t *pf;
-                list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink)
+                list_iterate_begin(&o->mmo_respages, p, pframe_t, pf_olink)
                 {
-                        if (pframe_is_pinned(pf))
+                        if (pframe_is_pinned(p))
                         {
-                                pframe_unpin(pf);
+                                pframe_unpin(p);
                                 dbg(DBG_PRINT, "(GRADING3B 7)\n");
                         }
-                        pframe_free(pf);
+                        pframe_free(p);
                         dbg(DBG_PRINT, "(GRADING3B 7)\n");
                 }
                 list_iterate_end();
-                o->mmo_refcount--;
-                if (o->mmo_shadowed)
-                {
-                        o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);
-                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
-                }
+                o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);      
                 slab_obj_free(shadow_allocator, o);
                 dbg(DBG_PRINT, "(GRADING3B 7)\n");
                 return;
@@ -161,98 +155,48 @@ shadow_put(mmobj_t *o)
  * can overflow the kernel stack when looking down a long shadow chain */
 static int
 shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
-{/*
-        mmobj_t *obj = o;
-        int flag;
-        if (forwrite == 1)
+{
+		mmobj_t *shadow_obj = o;
+        int res;
+		if (forwrite == 0)
         {
-                flag = pframe_get(o, pagenum, pf);
-                if (flag == 0)
+        		while (shadow_obj->mmo_shadowed){
+                	*pf = pframe_get_resident(shadow_obj, pagenum);
+                	if (!*pf)
+                	{
+                        	shadow_obj = shadow_obj->mmo_shadowed;
+                        	dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                	}else{
+                        KASSERT(NULL != (*pf));
+                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                        return 0;
+                }
+        	}
+        	res = pframe_lookup(shadow_obj, pagenum, forwrite, pf);
+        	if (res == 0)
+        	{
+                KASSERT(NULL != (*pf));
+                KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
+                dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
+                return res;
+        	}
+
+        	dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        	return res;
+
+        }else{
+        		res = pframe_get(o, pagenum, pf);
+                if (res == 0)
                 {
                         KASSERT(NULL != (*pf));
                         KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
                         dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
-                        return flag;
+                        return res;
                 }
                 dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                return flag;
-                
+                return res;
         }
-        
-        while (obj->mmo_shadowed != NULL)
-        {
-                *pf = pframe_get_resident(obj, pagenum);
-                if (*pf == NULL)
-                {
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                        obj = obj->mmo_shadowed;    
-                }
-                else
-                {
-                        KASSERT(NULL != (*pf));
-                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
-                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
-                        return 0;
-                }
-        }
-        flag = pframe_lookup(obj, pagenum, forwrite, pf);
-        if (flag == 0)
-        {
-                KASSERT(NULL != (*pf));
-                KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
-                dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
-                return 0;
-        }
-
-        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-        return flag;
-*/
-		 if (forwrite != 0)
-        {
-                int result = pframe_get(o, pagenum, pf);
-                if (result == 0)
-                {
-                        KASSERT(NULL != (*pf));
-                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
-                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
-                        return 0;
-                }
-                else
-                {
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                        return result;
-                }
-        }
-        mmobj_t *shadow_obj = o;
-        int res;
-        while (shadow_obj->mmo_shadowed)
-        {
-                *pf = pframe_get_resident(shadow_obj, pagenum);
-                if (!*pf)
-                {
-                        shadow_obj = shadow_obj->mmo_shadowed;
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                }
-                else
-                {
-                        KASSERT(NULL != (*pf));
-                        KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
-                        dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
-                        return 0;
-                }
-        }
-        res = pframe_lookup(shadow_obj, pagenum, forwrite, pf);
-        if (!res)
-        {
-                KASSERT(NULL != (*pf));
-                KASSERT((pagenum == (*pf)->pf_pagenum) && (!pframe_is_busy(*pf)));
-                dbg(DBG_PRINT, "(GRADING3A 6.d)\n");
-                return 0;
-        }
-
-        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-        return res;
-
 }
 
 /* As per the specification in mmobj.h, fill the page frame starting
@@ -272,17 +216,16 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
         KASSERT(pframe_is_busy(pf));
         KASSERT(!pframe_is_pinned(pf));
         dbg(DBG_PRINT, "(GRADING3A 6.e)\n");
-        pframe_t *res_pf;
-        int res = shadow_lookuppage(o->mmo_shadowed, pf->pf_pagenum, 0, &res_pf);
-        if (res == 0)
+        pframe_t *p;
+        int retval;
+        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+        if ((retval = shadow_lookuppage(o->mmo_shadowed, pf->pf_pagenum, 0, &p)) == 0)
         {
                 pframe_pin(pf);
-                memcpy(pf->pf_addr, res_pf->pf_addr, PAGE_SIZE);
-                dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                memcpy(pf->pf_addr, p->pf_addr, PAGE_SIZE);
                 return 0;
         }
-        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-        return res;
+        return retval;
 }
 
 /* These next two functions are not difficult. */
