@@ -567,7 +567,9 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
     vmarea_t *vma;
         list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink)
         {
-                
+                if(vma->vma_start >= lopage + npages){
+                        return 0;
+                }
                 if (vma->vma_start < lopage && vma->vma_end > lopage + npages)
                 {
                         // case 1
