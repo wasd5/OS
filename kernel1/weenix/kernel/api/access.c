@@ -144,13 +144,17 @@ addr_perm(struct proc *p, const void *vaddr, int perm)
         //NOT_YET_IMPLEMENTED("VM: addr_perm");
         vmarea_t * vma = vmmap_lookup(p->p_vmmap, ADDR_TO_PN(vaddr));
         if(!vma){
-                        return 0;
-        }
-        if(vma->vma_prot >= perm && vma->vma_prot & perm){
-                return 1;
-        }else{
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return 0;
         }
+        if(vma->vma_prot >= perm && vma->vma_prot & perm){
+                 dbg(DBG_PRINT, "(GRADING3A)\n");
+                return 1;
+        }else{
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return 0;
+        }
+        dbg(DBG_PRINT, "(GRADING3D 1)\n");
         return 0;
 }
 
@@ -172,9 +176,11 @@ range_perm(struct proc *p, const void *avaddr, size_t len, int perm)
         while(count_left > 0){
                 vmarea_t *vma = vmmap_lookup(p->p_vmmap, ADDR_TO_PN(avaddr)+ADDR_TO_PN(offset));
                 if(!vma){
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
                         return 0;
                 }
                 if(vma->vma_prot < perm || !(vma->vma_prot & perm)){
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
                         return 0;
                 }
                 
@@ -187,6 +193,8 @@ range_perm(struct proc *p, const void *avaddr, size_t len, int perm)
                 }
                 count_left = count_left - step_size;
                 offset = offset + step_size; 
+                dbg(DBG_PRINT, "(GRADING3A)\n");
         }
+        dbg(DBG_PRINT, "(GRADING3A)\n");
         return 1;
 }

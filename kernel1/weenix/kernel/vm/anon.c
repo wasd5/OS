@@ -60,6 +60,7 @@ anon_init()
         //NOT_YET_IMPLEMENTED("VM: anon_init");
         anon_allocator = slab_allocator_create("anon", sizeof(mmobj_t));
         KASSERT(NULL != anon_allocator);
+        dbg(DBG_PRINT, "(GRADING3A 4.a)\n");
 }
 
 /*
@@ -76,6 +77,7 @@ anon_create()
         KASSERT(NULL != new_anon);
         mmobj_init(new_anon, &anon_mmobj_ops);
         new_anon->mmo_refcount = 1;
+        dbg(DBG_PRINT, "(GRADING3B 1)\n");
         return new_anon;
 }
 
@@ -88,11 +90,8 @@ static void
 anon_ref(mmobj_t *o)
 {
         //NOT_YET_IMPLEMENTED("VM: anon_ref");
-        KASSERT(NULL != o);
-        KASSERT(0 < o->mmo_refcount);
-        KASSERT(o->mmo_refcount > o->mmo_nrespages);
-        KASSERT(&anon_mmobj_ops == o->mmo_ops);
-        
+        KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
+        dbg(DBG_PRINT, "(GRADING3A 4.b)\n");
         o->mmo_refcount++;
 }
 
@@ -108,14 +107,13 @@ static void
 anon_put(mmobj_t *o)
 {
         //NOT_YET_IMPLEMENTED("VM: anon_put");
-        /*
-        KASSERT(o);
-        KASSERT(0 != o->mmo_refcount);
-        KASSERT(o->mmo_refcount > o->mmo_nrespages);
-        KASSERT(&anon_mmobj_ops == o->mmo_ops);
-        if(o->mmo_refcount-1 == o->mmo_nrespages){
-                pframe_t *pf; 
-                list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink){
+        KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
+        dbg(DBG_PRINT, "(GRADING3A 4.c)\n");
+        if(o->mmo_refcount-1 == o->mmo_nrespages)
+        {
+                pframe_t *pf;
+                list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink)
+                {
                         while(pframe_is_busy(pf)){
                                 sched_sleep_on(&pf->pf_waitq);
                         }
@@ -128,28 +126,15 @@ anon_put(mmobj_t *o)
                         if(!pframe_is_pinned(pf)){
                                 pframe_free(pf);
                         }
-                } list_iterate_end();
-                slab_obj_free(anon_allocator, 0);
-        }
-        o->mmo_refcount--;
-        */
-        KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
-        dbg(DBG_PRINT, "(GRADING3A 4.c)\n");
-        if (o->mmo_refcount == o->mmo_nrespages + 1)
-        {
-                pframe_t *pf;
-                list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink)
-                {
-                        pframe_unpin(pf);
-                        pframe_free(pf);
                         dbg(DBG_PRINT, "(GRADING3B 1)\n");
+
                 }
                 list_iterate_end();
                 slab_obj_free(anon_allocator, o);
                 dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }
         dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        o->mmo_refcount = o->mmo_refcount - 1;
+        o->mmo_refcount--;
 }
 
 /* Get the corresponding page from the mmobj. No special handling is
@@ -159,6 +144,7 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
         //NOT_YET_IMPLEMENTED("VM: anon_lookuppage");
         int retval = pframe_get(o, pagenum, pf);
+        dbg(DBG_PRINT, "(GRADING3B 1)\n");
         return retval;
 }
 
@@ -166,20 +152,11 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 
 static int
 anon_fillpage(mmobj_t *o, pframe_t *pf)
-{/*
+{
         //NOT_YET_IMPLEMENTED("VM: anon_fillpage");
         KASSERT(pframe_is_busy(pf));
         KASSERT(!pframe_is_pinned(pf));
         //memset(pf->pf_addr,0,PAGE_SIZE);
-        if(!pframe_is_pinned(pf)){
-                pframe_pin(pf);
-        }
-        return 0;
-        */
-        
-        KASSERT(pframe_is_busy(pf));
-
-        KASSERT(!pframe_is_pinned(pf));
         dbg(DBG_PRINT, "(GRADING3A 4.d)\n");
         pframe_pin(pf);
         memset(pf->pf_addr, 0, PAGE_SIZE);

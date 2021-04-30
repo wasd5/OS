@@ -371,6 +371,7 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
                 cand_res = pframe_alloc(o, pagenum);
                 int retval = pframe_fill(cand_res);
                 if(retval < 0){
+                		dbg(DBG_PRINT, "(GRADING3D 2)\n");
                         pframe_free(cand_res);
                         return retval;
                 }else{
@@ -382,6 +383,9 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
                                 pframe_unpin(cand_res);
                         }
                          */
+                		KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
+                		KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
+                		dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
                         (*result) = cand_res;
                         return retval;
                 }
@@ -390,7 +394,11 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
                 while(cand_res->pf_flags == PF_BUSY){
                         sched_sleep_on(&(cand_res->pf_waitq));
                         cand_res = pframe_get_resident(o, pagenum);
+                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
                 }
+                KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
+        		KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
+        		dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
                 (*result) = cand_res;
                 return 0;
         }
@@ -413,6 +421,9 @@ void
 pframe_pin(pframe_t *pf)
 {
         //NOT_YET_IMPLEMENTED("VM: pframe_pin");
+		KASSERT(!pframe_is_free(pf)); /* can only pin a pframe object that's "in-use" */
+        KASSERT(pf->pf_pincount >= 0); /* the pin-count of a pframe object cannot be negative */
+        dbg(DBG_PRINT, "(GRADING3A 1.b)\n");
         if(pf->pf_pincount == 0){
                 //remove from allocated list
                 list_remove(&(pf->pf_link));
@@ -420,8 +431,10 @@ pframe_pin(pframe_t *pf)
                 //add to pinned list
                 list_insert_tail(&pinned_list, &(pf->pf_link));
                 npinned++;
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }
         pf->pf_pincount++;
+        dbg(DBG_PRINT, "(GRADING3B 1)\n");
 }
 
 /*
@@ -438,6 +451,10 @@ void
 pframe_unpin(pframe_t *pf)
 {
         //NOT_YET_IMPLEMENTED("VM: pframe_unpin");
+		KASSERT(!pframe_is_free(pf)); /* can only pin a pframe object that's "in-use" */
+        KASSERT(pf->pf_pincount > 0); /* the pin-count of a pframe object must be positive */
+        dbg(DBG_PRINT, "(GRADING3A 1.c)\n");
+
         pf->pf_pincount--;
         if(pf->pf_pincount == 0){
                 //remove from pinned list
@@ -446,9 +463,9 @@ pframe_unpin(pframe_t *pf)
                 //add to allocated list
                 list_insert_tail(&alloc_list, &(pf->pf_link));
                 nallocated++;
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }
-
-
+        dbg(DBG_PRINT, "(GRADING3B 1)\n");
 }
 
 /*
