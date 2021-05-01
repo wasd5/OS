@@ -330,7 +330,7 @@ int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
 {
-    /*
+    
         vmarea_t * cand_vmarea;
         // find/create cand_vmarea
         if(lopage == 0){
@@ -368,15 +368,26 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         KASSERT(NULL != cand_vmarea);
         // get vam_obj in 3 types
         mmobj_t * vma_obj;
-        if(flags & MAP_PRIVATE){
-                //TODO
-                vma_obj = shadow_create();
-        }
         if(file == NULL){
-                vma_obj = anon_create();
+                if(flags & MAP_PRIVATE){
+                        vma_obj = shadow_create();
+                        vma_obj->mmo_un.mmo_bottom_obj = anon_create();
+                        vma_obj->mmo_shadowed = vma_obj->mmo_un.mmo_bottom_obj;
+                        
+                }else{
+                        vma_obj = anon_create();
+                }
         }else{
-                file->vn_ops->mmap(file, cand_vmarea, &vma_obj);
+                if(flags & MAP_PRIVATE){
+                        vma_obj = shadow_create();
+                        file->vn_ops->mmap(file, cand_vmarea, &(vma_obj->mmo_un.mmo_bottom_obj));
+                        vma_obj->mmo_shadowed = vma_obj->mmo_un.mmo_bottom_obj;
+                        
+                }else{
+                        file->vn_ops->mmap(file, cand_vmarea, &vma_obj);
+                }
         }
+       
         //map
         cand_vmarea->vma_obj = vma_obj;
         vmmap_insert(map, cand_vmarea);
@@ -384,94 +395,8 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
                 *new = cand_vmarea;
         }
         return 0;
-       */
-    KASSERT(NULL != map);                                                       /* must not add a memory segment into a non-existing vmmap */
-        KASSERT(0 < npages);                                                        /* number of pages of this memory segment cannot be 0 */
-        KASSERT((MAP_SHARED & flags) || (MAP_PRIVATE & flags));                     /* must specify whether the memory segment is shared or private */
-        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_LOW) <= lopage));             /* if lopage is not zero, it must be a user space vpn */
-        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages))); /* if lopage is not zero, the specified page range must lie completely within the user space */
-        KASSERT(PAGE_ALIGNED(off));                                                 /* the off argument must be page aligned */
-        dbg(DBG_PRINT, "(GRADING3A 3.d)\n");
-        vmarea_t *vmarea = vmarea_alloc();
-        vmarea->vma_prot = prot;
-        vmarea->vma_flags = flags;
-        vmarea->vma_off = ADDR_TO_PN(off);
-        list_init(&vmarea->vma_plink);
-        list_init(&vmarea->vma_olink);
-        if (lopage == 0)
-        {
-                int startvfn = vmmap_find_range(map, npages, dir);
-                if (startvfn != -1)
-                {
-                        vmarea->vma_start = startvfn;
-                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-                }
-                else
-                {
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                        return -ENOMEM;
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        else
-        {
-                if (vmmap_is_range_empty(map, lopage, npages))
-                {
-                        vmarea->vma_start = lopage;
-                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-                }
-                else
-                {
-                        vmmap_remove(map, lopage, npages);
-                        vmarea->vma_start = lopage;
-                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        vmarea->vma_end = vmarea->vma_start + npages;
-
-        if (file == NULL)
-        {
-                if (MAP_PRIVATE & flags)
-                {
-                        vmarea->vma_obj = shadow_create();
-                        vmarea->vma_obj->mmo_un.mmo_bottom_obj = anon_create();
-                        vmarea->vma_obj->mmo_shadowed = vmarea->vma_obj->mmo_un.mmo_bottom_obj;
-                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
-                }
-                else
-                {
-                        vmarea->vma_obj = anon_create();
-                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        else
-        {
-                if (MAP_PRIVATE & flags)
-                {
-                        vmarea->vma_obj = shadow_create();
-                        file->vn_ops->mmap(file, vmarea, &(vmarea->vma_obj->mmo_un.mmo_bottom_obj));
-                        vmarea->vma_obj->mmo_shadowed = vmarea->vma_obj->mmo_un.mmo_bottom_obj;
-                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
-                }
-                else
-                {
-                        file->vn_ops->mmap(file, vmarea, &(vmarea->vma_obj));
-                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                }
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-
-        if (new)
-        {
-
-                *new = vmarea;
-                dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        }
-        vmmap_insert(map, vmarea);
-        dbg(DBG_PRINT, "(GRADING3B 1)\n");
-        return 0;
+       
+    
 }
 
 /*
