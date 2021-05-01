@@ -530,7 +530,7 @@ int do_link(const char *from, const char *to)
                 vput(to_vnode);
                 return -EEXIST;
         }
-        if(retval_to == -ENAMETOOLONG) {
+        if(retval_to == -ENAMETOOLONG || retval_to == -ENOTDIR) {
                 vput(vnode_from);
                 vput(vnode_dir);
                 return retval_to;

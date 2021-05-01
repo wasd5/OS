@@ -93,7 +93,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
  * be incremented.
  */
 //need to add (middle) KASSERT(NULL != dir_vnode->vn_ops->mknod);
-/*int
+int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
@@ -142,10 +142,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                        // dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                         break;
                 }else{ 
-                        //need know max pathname length
                         dbg(DBG_PRINT, "(GRADING2B)\n");
                         //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                        char curname[100];
+                        char curname[MAXPATHLEN];
                         memcpy(curname, pathname+start, index-start);
                         vnode_t *c_vnode;
                         int retval = lookup(p_vnode, curname, index-start, &c_vnode);
@@ -179,15 +178,14 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         return 0;
         
 }
-*/
+
+
+/*
 int dir_namev(const char *pathname, size_t *namelen, const char **name,
               vnode_t *base, vnode_t **res_vnode)
 {
     //NOT_YET_IMPLEMENTED("VFS: dir_namev");
-    KASSERT(NULL != pathname); /* the "pathname" argument must be non-NULL */
-    KASSERT(NULL != namelen); /* the "namelen" argument must be non-NULL */
-    KASSERT(NULL != name); /* the "name" argument must be non-NULL */
-    KASSERT(NULL != res_vnode); /* the "res_vnode" argument must be non-NULL */
+   
     
     vnode_t *cur_base;
     cur_base = base;
@@ -211,8 +209,7 @@ int dir_namev(const char *pathname, size_t *namelen, const char **name,
 
     vnode_t *tmp_parent_node = cur_base;
     vref(tmp_parent_node);
-    KASSERT(NULL != tmp_parent_node); /* pathname resolution must start with a valid directory */
-    dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+     dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
     vnode_t *tmp_child_node = NULL;
     int tmp_reval = 0;
     if (pathlen == 1 && pathname[0] == '/')
@@ -281,6 +278,8 @@ int dir_namev(const char *pathname, size_t *namelen, const char **name,
     dbg(DBG_PRINT, "(GRADING2A)\n");
     return 0;
 }
+*/
+
 
 /* This returns in res_vnode the vnode requested by the other parameters.
  * It makes use of dir_namev and lookup to find the specified vnode (if it
