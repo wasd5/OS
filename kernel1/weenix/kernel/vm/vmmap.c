@@ -543,6 +543,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
                         vma->vma_obj = vma_shadowed;
                         new_vmarea->vma_obj = new_vma_shadowed;
                         dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                        return 0;
                 }
                 // case 2
                 else if (vma->vma_start < lopage && vma->vma_end <= lopage + npages && vma->vma_end > lopage)
