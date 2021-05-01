@@ -330,16 +330,24 @@ int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
 {
-    
+    	KASSERT(NULL != map);                                                       /* must not add a memory segment into a non-existing vmmap */
+        KASSERT(0 < npages);                                                        /* number of pages of this memory segment cannot be 0 */
+        KASSERT((MAP_SHARED & flags) || (MAP_PRIVATE & flags));                     /* must specify whether the memory segment is shared or private */
+        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_LOW) <= lopage));             /* if lopage is not zero, it must be a user space vpn */
+        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages))); /* if lopage is not zero, the specified page range must lie completely within the user space */
+        KASSERT(PAGE_ALIGNED(off));                                                 /* the off argument must be page aligned */
+        dbg(DBG_PRINT, "(GRADING3A 3.d)\n");
         vmarea_t * cand_vmarea;
         // find/create cand_vmarea
         if(lopage == 0){
                 int start = vmmap_find_range(map, npages, dir);
                 if(start < 0){
                         return start;
+                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
                 }
                 cand_vmarea = vmarea_alloc();
                 if(!cand_vmarea){
+                		dbg(DBG_PRINT, "(GRADING3D 2)\n");
                         return -ENOMEM;
                 }
                 cand_vmarea->vma_start = start;
@@ -349,10 +357,11 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
                 cand_vmarea->vma_flags = flags;
                 list_link_init(&cand_vmarea->vma_plink);
                 list_link_init(&cand_vmarea->vma_olink);
-                
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }else{
                 if((vmmap_is_range_empty(map, lopage ,npages))==0){
                         vmmap_remove(map, lopage, npages);
+                        dbg(DBG_PRINT, "(GRADING3B 1)\n");
                 }
                 cand_vmarea = vmarea_alloc();
                 cand_vmarea->vma_start = lopage;
@@ -362,6 +371,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
                 cand_vmarea->vma_flags = flags;
                 list_link_init(&cand_vmarea->vma_plink);
                 list_link_init(&cand_vmarea->vma_olink);
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }
         
         //KAASERT cand_vmarea not null
@@ -373,19 +383,23 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
                         vma_obj = shadow_create();
                         vma_obj->mmo_un.mmo_bottom_obj = anon_create();
                         vma_obj->mmo_shadowed = vma_obj->mmo_un.mmo_bottom_obj;
-                        
+                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
                 }else{
                         vma_obj = anon_create();
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
                 }
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }else{
                 if(flags & MAP_PRIVATE){
                         vma_obj = shadow_create();
                         file->vn_ops->mmap(file, cand_vmarea, &(vma_obj->mmo_un.mmo_bottom_obj));
                         vma_obj->mmo_shadowed = vma_obj->mmo_un.mmo_bottom_obj;
-                        
+                         dbg(DBG_PRINT, "(GRADING3B 7)\n");
                 }else{
                         file->vn_ops->mmap(file, cand_vmarea, &vma_obj);
+               			dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 }
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }
        
         //map
@@ -393,7 +407,9 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         vmmap_insert(map, cand_vmarea);
         if(new != NULL){
                 *new = cand_vmarea;
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
         }
+        dbg(DBG_PRINT, "(GRADING3B 1)\n");
         return 0;
        
     
@@ -584,33 +600,6 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
-    /*
-        uint32_t offset = 0;
-        uint32_t count_left = count;
-        while(count_left > 0){
-                pframe_t *pf;
-                vmarea_t *vma;
-                KASSERT(NULL != (vma = vmmap_lookup(map, ADDR_TO_PN(vaddr)+ADDR_TO_PN(offset)))) ;
-                dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                uint32_t pagenum = vma->vma_off + ADDR_TO_PN(vaddr) + ADDR_TO_PN(offset) - vma->vma_start;
-                KASSERT(0 == pframe_lookup(vma->vma_obj, pagenum , 1, &pf));
-                uint32_t page_left_size = PAGE_SIZE-PAGE_OFFSET((uint32_t)vaddr+offset);
-                uint32_t cpy_size = 0;
-                if(page_left_size <= count_left){
-                        cpy_size = page_left_size;
-                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                }else{
-                        cpy_size = count_left;
-                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-                }
-                memcpy((void*)((uint32_t)(pf->pf_addr)+PAGE_OFFSET((uint32_t)vaddr+offset)), (void*)((uint32_t)buf + offset),cpy_size);
-                pframe_dirty(pf);
-                count_left = count_left - cpy_size;
-                offset = offset + cpy_size; 
-        }
-        dbg(DBG_PRINT, "(GRADING3D 1)\n");
-        return 0;
-        */
         size_t count_left = count;
         uint32_t cur_addr = (uint32_t)vaddr;
         while (count_left > 0)

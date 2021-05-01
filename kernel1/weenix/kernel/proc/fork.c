@@ -82,10 +82,14 @@ do_fork(struct regs *regs)
         kthread_t *newthr = kthread_clone(curthr);
         KASSERT(newthr->kt_kstack != NULL); 
         dbg(DBG_PRINT, "(GRADING3A 7.a)\n");
+
         vmarea_t *cur_vma = NULL;
         vmarea_t *child_vma = NULL;
+
         vmmap_destroy(newproc->p_vmmap);
+
         vmmap_t *child_vmmap = vmmap_clone(curproc->p_vmmap);
+
         mmobj_t *csh = NULL;
         mmobj_t *psh = NULL;
         list_iterate_begin(&curproc->p_vmmap->vmm_list, cur_vma, vmarea_t, vma_plink) {
@@ -100,6 +104,8 @@ do_fork(struct regs *regs)
                         
                         csh = shadow_create();
                         psh = shadow_create();
+
+
                         csh->mmo_shadowed = cur_vma->vma_obj;
                         psh->mmo_shadowed = cur_vma->vma_obj;
                         
@@ -116,16 +122,22 @@ do_fork(struct regs *regs)
         pt_unmap_range(curproc->p_pagedir, USER_MEM_LOW, USER_MEM_HIGH);
         tlb_flush_all();
         regs->r_eax = 0;
+
         newthr->kt_proc = newproc;
         newthr->kt_ctx.c_pdptr = newproc->p_pagedir;
         newthr->kt_ctx.c_kstack = (uintptr_t)newthr->kt_kstack;
+
         newthr->kt_ctx.c_kstacksz = DEFAULT_STACK_SIZE;
         newthr->kt_ctx.c_eip = (uintptr_t)userland_entry;
+
+
         newthr->kt_ctx.c_esp = fork_setup_stack(regs, newthr->kt_kstack);
         int count = 0;
         for(count = 0; count < NFILES; count++)
         {
             newproc->p_files[count] = curproc->p_files[count];
+
+
             if(curproc->p_files[count])
             {
                 fref(newproc->p_files[count]);
@@ -136,8 +148,11 @@ do_fork(struct regs *regs)
         newproc->p_start_brk = curproc->p_start_brk;
         newproc->p_cwd = curproc->p_cwd;
         newproc->p_brk = curproc->p_brk;
+
         list_insert_tail(&(newproc->p_threads), &(newthr->kt_plink));
         sched_make_runnable(newthr);
+
+
         dbg(DBG_PRINT, "(GRADING3B 7)\n");
         return newproc->p_pid;
 }
