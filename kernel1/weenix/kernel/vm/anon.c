@@ -158,8 +158,11 @@ anon_fillpage(mmobj_t *o, pframe_t *pf)
         KASSERT(!pframe_is_pinned(pf));
         //memset(pf->pf_addr,0,PAGE_SIZE);
         dbg(DBG_PRINT, "(GRADING3A 4.d)\n");
-        pframe_pin(pf);
-        memset(pf->pf_addr, 0, PAGE_SIZE);
+        if(!pframe_is_pinned(pf))
+        {
+                pframe_pin(pf);
+                memset(pf->pf_addr, 0, PAGE_SIZE);
+        }
         dbg(DBG_PRINT, "(GRADING3B 1)\n");
         return 0;
 }

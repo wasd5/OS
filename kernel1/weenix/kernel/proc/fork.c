@@ -75,21 +75,19 @@ do_fork(struct regs *regs)
         KASSERT(curproc != NULL); /* the parent process, which is curproc, must be non-NULL */
         KASSERT(curproc->p_state == PROC_RUNNING); /* the parent process must be in the running state and not in the zombie state */
         dbg(DBG_PRINT, "(GRADING3A 7.a)\n");
-
+        //step1
         proc_t *newproc = proc_create("child");
         KASSERT(newproc->p_state == PROC_RUNNING); 
         dbg(DBG_PRINT, "(GRADING3A 7.a)\n");
-        kthread_t *newthr = kthread_clone(curthr);
-        KASSERT(newthr->kt_kstack != NULL); 
+        kthread_t *childthr = kthread_clone(curthr);
+        KASSERT(childthr->kt_kstack != NULL); 
         dbg(DBG_PRINT, "(GRADING3A 7.a)\n");
-
+        //step 2
+        vmmap_destroy(newproc->p_vmmap);
+        vmmap_t *child_vmmap = vmmap_clone(curproc->p_vmmap);
+        //step 3
         vmarea_t *cur_vma = NULL;
         vmarea_t *child_vma = NULL;
-
-        vmmap_destroy(newproc->p_vmmap);
-
-        vmmap_t *child_vmmap = vmmap_clone(curproc->p_vmmap);
-
         mmobj_t *csh = NULL;
         mmobj_t *psh = NULL;
         list_iterate_begin(&curproc->p_vmmap->vmm_list, cur_vma, vmarea_t, vma_plink) {
@@ -119,38 +117,45 @@ do_fork(struct regs *regs)
         } list_iterate_end();
         newproc->p_vmmap = child_vmmap;
         child_vmmap->vmm_proc = newproc;
+
+
+        //step 4
         pt_unmap_range(curproc->p_pagedir, USER_MEM_LOW, USER_MEM_HIGH);
         tlb_flush_all();
         regs->r_eax = 0;
 
-        newthr->kt_proc = newproc;
-        newthr->kt_ctx.c_pdptr = newproc->p_pagedir;
-        newthr->kt_ctx.c_kstack = (uintptr_t)newthr->kt_kstack;
+        childthr->kt_proc = newproc;
+        childthr->kt_ctx.c_pdptr = newproc->p_pagedir;
+        childthr->kt_ctx.c_kstack = (uintptr_t)childthr->kt_kstack;
+        childthr->kt_ctx.c_kstacksz = DEFAULT_STACK_SIZE;
+        childthr->kt_ctx.c_eip = (uintptr_t)userland_entry;
 
-        newthr->kt_ctx.c_kstacksz = DEFAULT_STACK_SIZE;
-        newthr->kt_ctx.c_eip = (uintptr_t)userland_entry;
 
+        childthr->kt_ctx.c_esp = fork_setup_stack(regs, childthr->kt_kstack);
 
-        newthr->kt_ctx.c_esp = fork_setup_stack(regs, newthr->kt_kstack);
         int count = 0;
-        for(count = 0; count < NFILES; count++)
+        while(count < NFILES)
         {
             newproc->p_files[count] = curproc->p_files[count];
-
-
-            if(curproc->p_files[count])
+            if(curproc -> p_files[count])
             {
                 fref(newproc->p_files[count]);
                         dbg(DBG_PRINT, "(GRADING3B 7)\n");
             }
                 dbg(DBG_PRINT, "(GRADING3B 7)\n");
+            count++;
         }
-        newproc->p_start_brk = curproc->p_start_brk;
+        //step 7
         newproc->p_cwd = curproc->p_cwd;
+
+        
+        
+        newproc->p_start_brk = curproc->p_start_brk;
         newproc->p_brk = curproc->p_brk;
 
-        list_insert_tail(&(newproc->p_threads), &(newthr->kt_plink));
-        sched_make_runnable(newthr);
+        list_insert_tail(&(newproc->p_threads), &(childthr->kt_plink));
+
+        sched_make_runnable(childthr);
 
 
         dbg(DBG_PRINT, "(GRADING3B 7)\n");

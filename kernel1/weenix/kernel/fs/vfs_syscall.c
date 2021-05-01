@@ -229,7 +229,6 @@ do_dup2(int ofd, int nfd)
         {
                 file_t *file = fget(ofd);
                 curproc->p_files[nfd] = file;
-                
                 return nfd;
         }
         return ofd;

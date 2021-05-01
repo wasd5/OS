@@ -448,8 +448,16 @@ int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
         vmarea_t *vma;
-        list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink)
+        if( vmmap_is_range_empty(map, lopage, npages) )
         {
+            dbg(DBG_PRINT, "(GRADING3D 2)\n");
+            return 0;
+        }
+    
+        if( !(list_empty(&(map->vmm_list))))
+        {
+            list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink)
+            {
                 // case 1
                 if (vma->vma_start < lopage && vma->vma_end > lopage + npages)
                 {
@@ -514,9 +522,9 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
                         dbg(DBG_PRINT, "(GRADING3A)\n");
                 }
                 dbg(DBG_PRINT, "(GRADING3A)\n");
-        }
+            }
         list_iterate_end();
-        
+       } 
         pt_unmap_range(curproc->p_pagedir, (uintptr_t)PN_TO_ADDR(lopage), (uintptr_t)PN_TO_ADDR(lopage + npages));
         dbg(DBG_PRINT, "(GRADING3A)\n");
         return 0;

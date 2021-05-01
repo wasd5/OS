@@ -123,21 +123,28 @@ shadow_put(mmobj_t *o)
         pframe_t *p;
         if (o->mmo_refcount - 1 == o->mmo_nrespages)
         {
-                list_iterate_begin(&o->mmo_respages, p, pframe_t, pf_olink)
-                {
-                        if (pframe_is_pinned(p))
-                        {
-                                pframe_unpin(p);
-                                dbg(DBG_PRINT, "(GRADING3B 7)\n");
-                        }
-                        pframe_free(p);
-                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+            if (!list_empty ( &o->mmo_respages )) {
+                    list_iterate_begin(&o->mmo_respages, p, pframe_t, pf_olink)
+                    {
+                            if (pframe_is_pinned(p))
+                            {
+                                    pframe_unpin(p);
+                                    dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                            }
+                            pframe_free(p);
+                            dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                    }
+                    list_iterate_end();
+                    o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);      
+                    slab_obj_free(shadow_allocator, o);
+                    dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                    return;
+            }else{
+                    o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);
+                    slab_obj_free(shadow_allocator, o);
+                    dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                    return;
                 }
-                list_iterate_end();
-                o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);      
-                slab_obj_free(shadow_allocator, o);
-                dbg(DBG_PRINT, "(GRADING3B 7)\n");
-                return;
         }
         o->mmo_refcount--;
         dbg(DBG_PRINT, "(GRADING3B 7)\n");
@@ -158,7 +165,7 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
 		mmobj_t *shadow_obj = o;
         int res;
-		if (forwrite == 0)
+		if (!forwrite)
         {
         		while (shadow_obj->mmo_shadowed){
                 	*pf = pframe_get_resident(shadow_obj, pagenum);
@@ -221,10 +228,15 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
         dbg(DBG_PRINT, "(GRADING3D 2)\n");
         if ((retval = shadow_lookuppage(o->mmo_shadowed, pf->pf_pagenum, 0, &p)) == 0)
         {
-                pframe_pin(pf);
+                dbg(DBG_PRINT, "(GRADING3D 2)\n");
                 memcpy(pf->pf_addr, p->pf_addr, PAGE_SIZE);
-                return 0;
+                if ( !pframe_is_pinned(pf) )
+                {
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                        pframe_pin(pf);
+                }
         }
+        dbg(DBG_PRINT, "(GRADING3D 2)\n");
         return retval;
 }
 
@@ -233,13 +245,13 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
 static int
 shadow_dirtypage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_dirtypage");
+        //NOT_YET_IMPLEMENTED("VM: shadow_dirtypage");
         return -1;
 }
 
 static int
 shadow_cleanpage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_cleanpage");
+        //NOT_YET_IMPLEMENTED("VM: shadow_cleanpage");
         return -1;
 }

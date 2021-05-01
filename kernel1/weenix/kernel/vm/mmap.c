@@ -66,13 +66,18 @@ do_mmap(void *addr, size_t len, int prot, int flags,
                 return -EINVAL;
             }
         }
+
         if (!((flags & MAP_SHARED) || (flags & MAP_PRIVATE) || (flags & MAP_ANON) || (flags & MAP_FIXED)))
         {
                 dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return -EINVAL;
         }
-        if (!PAGE_ALIGNED(off) || len <= 0 || len > USER_MEM_HIGH - USER_MEM_LOW)
+        if (!PAGE_ALIGNED(off))
         {
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -EINVAL;
+        }
+        if(len <= 0 || len > USER_MEM_HIGH - USER_MEM_LOW){
                 dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return -EINVAL;
         }
@@ -124,6 +129,10 @@ int
 do_munmap(void *addr, size_t len)
 {       
 
+        if(!(PAGE_ALIGNED(addr)))
+        {
+                return -EINVAL;
+        }
         if((uint32_t)addr < USER_MEM_LOW || (uint32_t)addr + len > USER_MEM_HIGH){
                 dbg(DBG_PRINT, "(GRADING3D 1)\n");
                 return -EINVAL;
