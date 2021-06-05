@@ -206,10 +206,12 @@ sched_switch(void)
         oldIPL = intr_getipl();
         intr_setipl(IPL_HIGH);
         while(sched_queue_empty(&kt_runq)){
+                intr_disable();
                 intr_setipl(IPL_LOW);
                 //need halt cpu fix when deal with kernel3
-                intr_setipl(IPL_HIGH);
+                intr_wait();
         }
+        intr_setipl(IPL_HIGH);
         old_thread = curthr;
         curthr = ktqueue_dequeue(&kt_runq);
         //old_thread->kt_state = KT_SLEEP;

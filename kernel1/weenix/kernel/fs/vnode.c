@@ -501,8 +501,9 @@ special_file_write(vnode_t *file, off_t offset, const void *buf, size_t count)
 static int
 special_file_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: special_file_mmap");
-        return 0;
+        //NOT_YET_IMPLEMENTED("VM: special_file_mmap");
+        int res = file->vn_cdev->cd_ops->mmap(file, vma, ret);
+        return res;
 }
 
 /* Just as with mmap above, pass the call through to the

@@ -356,8 +356,53 @@ pframe_fill(pframe_t *pf)
 int
 pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
 {
-        NOT_YET_IMPLEMENTED("VM: pframe_get");
-        return 0;
+        //NOT_YET_IMPLEMENTED("VM: pframe_get");
+        //candidate_result
+        pframe_t *cand_res;
+        cand_res = pframe_get_resident(o, pagenum);
+        //check null or not
+        if(cand_res == NULL){
+                //check call pageoutd and wake it up or not
+                while(pageoutd_needed()&&!pageoutd_target_met()){
+                        pageoutd_wakeup();
+                        sched_sleep_on(&alloc_waitq);
+                }
+                //create new pframe_t and fill it
+                cand_res = pframe_alloc(o, pagenum);
+                int retval = pframe_fill(cand_res);
+                if(retval < 0){
+                        pframe_free(cand_res);
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                        return retval;
+                }else{
+                        /*
+                        while(!pageoutd_target_met()){
+                                pframe_pin(cand_res);
+                                pageoutd_wakeup();
+                                sched_sleep_on(&alloc_waitq);
+                                pframe_unpin(cand_res);
+                        }
+                         */
+
+                        (*result) = cand_res;
+                        KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
+                        KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
+                        dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
+                        return retval;
+                }
+        }else{
+                //check busy or not
+                while(cand_res->pf_flags == PF_BUSY){
+                        sched_sleep_on(&(cand_res->pf_waitq));
+                        cand_res = pframe_get_resident(o, pagenum);
+                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                }
+                (*result) = cand_res;
+                KASSERT(NULL != *result); /* on successful return, must return a valid pframe object */
+                KASSERT(!pframe_is_busy(*result)); /*  the returned pframe object must not be in the "busy" state */
+                dbg(DBG_PRINT, "(GRADING3A 1.a)\n");
+                return 0;
+        }
 }
 
 /*
@@ -376,7 +421,21 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
 void
 pframe_pin(pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: pframe_pin");
+        //NOT_YET_IMPLEMENTED("VM: pframe_pin");
+		KASSERT(!pframe_is_free(pf)); /* can only pin a pframe object that's "in-use" */
+        KASSERT(pf->pf_pincount >= 0); /* the pin-count of a pframe object cannot be negative */
+        dbg(DBG_PRINT, "(GRADING3A 1.b)\n");
+        if(pf->pf_pincount == 0){
+                //remove from allocated list
+                list_remove(&(pf->pf_link));
+                nallocated--;
+                //add to pinned list
+                list_insert_tail(&pinned_list, &(pf->pf_link));
+                npinned++;
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
+        }
+        pf->pf_pincount++;
+        dbg(DBG_PRINT, "(GRADING3B 1)\n");
 }
 
 /*
@@ -392,7 +451,22 @@ pframe_pin(pframe_t *pf)
 void
 pframe_unpin(pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: pframe_unpin");
+        //NOT_YET_IMPLEMENTED("VM: pframe_unpin");
+		KASSERT(!pframe_is_free(pf)); /* can only pin a pframe object that's "in-use" */
+        KASSERT(pf->pf_pincount > 0); /* the pin-count of a pframe object must be positive */
+        dbg(DBG_PRINT, "(GRADING3A 1.c)\n");
+
+        pf->pf_pincount--;
+        if(pf->pf_pincount == 0){
+                //remove from pinned list
+                list_remove(&(pf->pf_link));
+                npinned--;
+                //add to allocated list
+                list_insert_tail(&alloc_list, &(pf->pf_link));
+                nallocated++;
+                dbg(DBG_PRINT, "(GRADING3B 1)\n");
+        }
+        dbg(DBG_PRINT, "(GRADING3B 1)\n");
 }
 
 /*

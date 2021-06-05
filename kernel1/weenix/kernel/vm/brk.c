@@ -73,6 +73,37 @@
 int
 do_brk(void *addr, void **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: do_brk");
+        //NOT_YET_IMPLEMENTED("VM: do_brk");
+		int flag;
+		uint32_t fend, astart;
+        if(addr == NULL) {
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+            	*ret = curproc->p_brk;
+            	return 0;
+        }
+        if(addr < curproc->p_start_brk || (unsigned int)addr > USER_MEM_HIGH) {
+            	dbg(DBG_PRINT, "(GRADING3D 1)\n");
+               	return -ENOMEM;
+        }
+        vmarea_t *v = vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(curproc->p_start_brk));
+        if ((astart = ADDR_TO_PN(PAGE_ALIGN_UP(addr))) > (fend = ADDR_TO_PN(PAGE_ALIGN_UP(curproc->p_brk))))
+        {
+                if ((flag = vmmap_is_range_empty(curproc->p_vmmap, fend, (astart - fend))) == 0)
+                {
+                        dbg(DBG_PRINT, "(GRADING3D 2)\n");
+                        return -ENOMEM;
+                }
+                
+                v->vma_end = astart;
+                curproc->p_brk = addr;
+                *ret = addr;
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return 0;
+        }
+        curproc->p_brk = addr;
+        v->vma_end = astart;
+        *ret = addr;
+        dbg(DBG_PRINT, "(GRADING3D 1)\n");
         return 0;
+        
 }

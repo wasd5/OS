@@ -70,10 +70,94 @@ fork_setup_stack(const regs_t *regs, void *kstack)
 int
 do_fork(struct regs *regs)
 {
-        vmarea_t *vma, *clone_vma;
-        pframe_t *pf;
-        mmobj_t *to_delete, *new_shadowed;
+        
+        KASSERT(regs != NULL); /* the function argument must be non-NULL */
+        KASSERT(curproc != NULL); /* the parent process, which is curproc, must be non-NULL */
+        KASSERT(curproc->p_state == PROC_RUNNING); /* the parent process must be in the running state and not in the zombie state */
+        dbg(DBG_PRINT, "(GRADING3A 7.a)\n");
+        //step1
+        proc_t *newproc = proc_create("child");
+        KASSERT(newproc->p_state == PROC_RUNNING); 
+        dbg(DBG_PRINT, "(GRADING3A 7.a)\n");
+        kthread_t *childthr = kthread_clone(curthr);
+        KASSERT(childthr->kt_kstack != NULL); 
+        dbg(DBG_PRINT, "(GRADING3A 7.a)\n");
+        //step 2
+        vmmap_destroy(newproc->p_vmmap);
+        vmmap_t *child_vmmap = vmmap_clone(curproc->p_vmmap);
+        //step 3
+        vmarea_t *cur_vma = NULL;
+        vmarea_t *child_vma = NULL;
+        mmobj_t *csh = NULL;
+        mmobj_t *psh = NULL;
+        list_iterate_begin(&curproc->p_vmmap->vmm_list, cur_vma, vmarea_t, vma_plink) {
+                child_vma = vmmap_lookup(child_vmmap, cur_vma->vma_start);
+                if((cur_vma->vma_flags & MAP_PRIVATE) != MAP_PRIVATE) {
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                        cur_vma->vma_obj->mmo_ops->ref(cur_vma->vma_obj);
+                        child_vma->vma_obj = cur_vma->vma_obj;
+                } else {
+                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+                        cur_vma->vma_obj->mmo_ops->ref(cur_vma->vma_obj);
+                        
+                        csh = shadow_create();
+                        psh = shadow_create();
 
-        NOT_YET_IMPLEMENTED("VM: do_fork");
-        return 0;
+
+                        csh->mmo_shadowed = cur_vma->vma_obj;
+                        psh->mmo_shadowed = cur_vma->vma_obj;
+                        
+                        csh->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(cur_vma->vma_obj);
+                        psh->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(cur_vma->vma_obj);
+                        
+                        child_vma->vma_obj = csh;
+                        cur_vma->vma_obj = psh;
+                }
+                list_insert_tail(mmobj_bottom_vmas(cur_vma->vma_obj), &child_vma->vma_olink);
+        } list_iterate_end();
+        newproc->p_vmmap = child_vmmap;
+        child_vmmap->vmm_proc = newproc;
+
+
+        //step 4
+        pt_unmap_range(curproc->p_pagedir, USER_MEM_LOW, USER_MEM_HIGH);
+        tlb_flush_all();
+        regs->r_eax = 0;
+
+        childthr->kt_proc = newproc;
+        childthr->kt_ctx.c_pdptr = newproc->p_pagedir;
+        childthr->kt_ctx.c_kstack = (uintptr_t)childthr->kt_kstack;
+        childthr->kt_ctx.c_kstacksz = DEFAULT_STACK_SIZE;
+        childthr->kt_ctx.c_eip = (uintptr_t)userland_entry;
+
+
+        childthr->kt_ctx.c_esp = fork_setup_stack(regs, childthr->kt_kstack);
+
+        int count = 0;
+        while(count < NFILES)
+        {
+            newproc->p_files[count] = curproc->p_files[count];
+            if(curproc -> p_files[count])
+            {
+                fref(newproc->p_files[count]);
+                        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+            }
+                dbg(DBG_PRINT, "(GRADING3B 7)\n");
+            count++;
+        }
+        //step 7
+        newproc->p_cwd = curproc->p_cwd;
+
+        
+        
+        newproc->p_start_brk = curproc->p_start_brk;
+        newproc->p_brk = curproc->p_brk;
+
+        list_insert_tail(&(newproc->p_threads), &(childthr->kt_plink));
+
+        sched_make_runnable(childthr);
+
+
+        dbg(DBG_PRINT, "(GRADING3B 7)\n");
+        return newproc->p_pid;
 }

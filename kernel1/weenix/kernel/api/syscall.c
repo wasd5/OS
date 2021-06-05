@@ -74,8 +74,24 @@ init_func(syscall_init);
 static int
 sys_read(read_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_read");
-        return -1;
+        write_args_t            kern_args;
+        void                    *buf;
+        int                     err;
+
+        err = copy_from_user(&kern_args, arg, sizeof(read_args_t));         
+        buf = page_alloc();
+        if ((err = do_read(kern_args.fd, buf, kern_args.nbytes)) < 0){
+                page_free(buf);
+                curthr->kt_errno = -err;
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -1;
+        }
+        int reval = copy_to_user(arg->buf, buf, err);
+
+        page_free(buf);
+
+        dbg(DBG_PRINT, "(GRADING3A)\n");
+        return err;
 }
 
 /*
@@ -84,8 +100,32 @@ sys_read(read_args_t *arg)
 static int
 sys_write(write_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_write");
-        return -1;
+        //NOT_YET_IMPLEMENTED("VM: sys_write");
+        write_args_t            kern_args;
+        void                    *buf;
+        int                     err;
+
+        if ((err = copy_from_user(&kern_args, arg, sizeof(write_args_t))) < 0){
+                curthr->kt_errno = -err;
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -1;
+        }
+        buf = page_alloc();
+        if ((err = copy_from_user(buf, kern_args.buf, kern_args.nbytes)) < 0){
+                curthr->kt_errno = -err;
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -1;
+        }
+        err = do_write(kern_args.fd, buf, kern_args.nbytes);
+        page_free(buf);
+        if(err < 0){
+                curthr->kt_errno = -err;
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return -1;
+        }else {
+                dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                return err;
+        }
 }
 
 /*
@@ -100,8 +140,34 @@ sys_write(write_args_t *arg)
 static int
 sys_getdents(getdents_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_getdents");
-        return -1;
+        getdents_args_t         kern_args;
+        void                    *buf;
+        int                     reval;
+        unsigned int            bytecount = 0;
+        unsigned int            count = 0;
+        //getdents_args_t dent_arg;
+        reval = copy_from_user(&kern_args, arg, sizeof(getdents_args_t));
+        dirent_t cur_dir;
+        reval = copy_from_user(&cur_dir, arg->dirp, sizeof(dirent_t));
+        //while (count < (arg->count / sizeof(dirent_t)))
+        for(count= 0; count < arg->count / sizeof(dirent_t); count++)
+        {
+                reval = do_getdent(kern_args.fd, &cur_dir);
+                if (reval == 0)
+                {
+                        dbg(DBG_PRINT, "(GRADING3A)\n");
+                        break;
+                }else if(reval < 0){
+                        curthr->kt_errno = -reval;
+                        dbg(DBG_PRINT, "(GRADING3D 1)\n");
+                        return -1;
+                }
+                copy_to_user(kern_args.dirp + count, &cur_dir, reval);
+                bytecount += reval;
+                dbg(DBG_PRINT, "(GRADING3A)\n");
+        }
+        dbg(DBG_PRINT, "(GRADING3A)\n");
+        return bytecount;
 }
 
 #ifdef __MOUNTING__
@@ -859,4 +925,3 @@ static int syscall_dispatch(uint32_t sysnum, uint32_t args, regs_t *regs)
                         return -1;
         }
 }
-

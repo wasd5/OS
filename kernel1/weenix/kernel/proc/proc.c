@@ -221,7 +221,6 @@ failed:
 proc_t *
 proc_create(char *name)
 {
-        //NOT_YET_IMPLEMENTED("PROCS: proc_create");
         
          proc_t *p = (proc_t *)slab_obj_alloc(proc_allocator);
         //memset(p, 0, sizeof(proc_t));
@@ -268,6 +267,8 @@ proc_create(char *name)
         //assign p_list_link
         list_link_init(&(p->p_list_link));
         list_insert_tail(&_proc_list, &(p->p_list_link));
+
+        
         //p_child_link in assign parent child relationship
         dbg(DBG_PRINT, "(GRADING1A)\n");
         #ifdef __VFS__
@@ -276,17 +277,29 @@ proc_create(char *name)
         	p->p_files[fd] = NULL;
         	dbg(DBG_PRINT, "(GRADING2A)\n");
     	}
-    	p->p_cwd = vfs_root_vn;
-    	if (p->p_cwd != NULL){
-        	vref(p->p_cwd);
-        	dbg(DBG_PRINT, "(GRADING2A)\n");
-   		}
+    	p->p_cwd = NULL;
+    	//edit fot vfstest
+    	if(p->p_pid>2)
+    	{
+        p->p_cwd = p->p_pproc->p_cwd; 
+        if(p->p_cwd != NULL) {
+                vref(p->p_cwd);
+                dbg(DBG_PRINT, "(GRADING2A)\n");
+       		}
+    	}
+    	#endif
+   		#ifdef __VM__
+    	p->p_brk = NULL;
+        p->p_start_brk = NULL;
+        p->p_vmmap = vmmap_create();
+        p->p_vmmap->vmm_proc = p;
     	#endif
 
     	dbg(DBG_PRINT, "(GRADING2A)\n");
 
         return p;
 }
+
 
 /**
  * Cleans up as much as the process as can be done from within the
@@ -360,6 +373,10 @@ proc_cleanup(int status)
         if(curproc->p_pid != 2){
                 vput(curproc->p_cwd);
         }
+        //vm
+        if(curproc->p_vmmap !=NULL){
+                vmmap_destroy(curproc->p_vmmap);
+        }
         sched_wakeup_on(&(curproc->p_pproc->p_wait));
 }
 
@@ -422,7 +439,7 @@ void
 proc_thread_exited(void *retval)
 {
         //NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
-        proc_cleanup(curproc->p_status);
+        proc_cleanup((int) retval);
         dbg(DBG_PRINT, "(GRADING1A)\n");
         sched_switch();
 }
@@ -479,7 +496,9 @@ do_waitpid(pid_t pid, int options, int *status)
                 while(1){
                         list_iterate_begin(&(curproc->p_children), p, proc_t, p_child_link) {
                                 if (p->p_state == PROC_DEAD) {
-                                        *status = p->p_status;
+                                        if(status!=NULL){
+                                                *status = p->p_status;
+                                        }
                                         pid_t retpid = p->p_pid;
                                         //remove p from curproc->p_children
                                         list_remove(&(p->p_child_link));
@@ -541,7 +560,9 @@ do_exit(int status)
     //NOT_YET_IMPLEMENTED("PROCS: do_exit");
 
     // this is single thread thus no need for list interate
-    curproc->p_status = status;
-    kthread_exit(curthr->kt_retval);
-    dbg(DBG_PRINT, "(GRADING1C)\n");
+    kthread_t *kt;
+    list_iterate_begin(&(curproc->p_threads), kt, kthread_t, kt_plink){
+            dbg(DBG_PRINT, "(GRADING1C)\n");
+            kthread_cancel(kt, (void *)(status));
+    }list_iterate_end();
 }

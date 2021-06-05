@@ -43,31 +43,31 @@ int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
         //NOT_YET_IMPLEMENTED("VFS: lookup");
-        dbg(DBG_PRINT, "(GRADING2B)\n");
+        //dbg(DBG_PRINT, "(GRADING2B)\n");
         KASSERT(dir != NULL);
         KASSERT(name != NULL);
         KASSERT(result != NULL);
         dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
         if(len > NAME_LEN){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return -ENAMETOOLONG;
         }
         if(dir->vn_ops->lookup == NULL){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return -ENOTDIR;
         }else{
                 if(len == 0){
                         (*result) = dir;
                         vref(*result);
                         dbg(DBG_PRINT, "(GRADING2B)\n");
-                        dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
+                       // dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                         return 0;
                 }
                 int ret = dir->vn_ops->lookup(dir, name, len, result);
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
+               // dbg(DBG_PRINT, "(GRADING2A 2.a)\n");
                 return ret;
         }
 
@@ -92,51 +92,43 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
  * Note: A successful call to this causes vnode refcount on *res_vnode to
  * be incremented.
  */
+//need to add (middle) KASSERT(NULL != dir_vnode->vn_ops->mknod);
 int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
-        //NOT_YET_IMPLEMENTED("VFS: dir_namev");
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        KASSERT(NULL != pathname); /* the "pathname" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-        KASSERT(NULL != namelen); /* the "namelen" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-        KASSERT(NULL != name); /* the "name" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-        KASSERT(NULL != res_vnode); /* the "res_vnode" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+        
+        KASSERT(NULL != pathname);  
+        KASSERT(NULL != namelen); 
+        KASSERT(NULL != name); 
+        
+        KASSERT(NULL != res_vnode); 
+        
         vnode_t *p_vnode;
         int index = 0;
         int pathlen = strlen(pathname);
-        if(pathname[0]=='/'){
+        if(pathname != NULL && pathname[0]=='/'){
                 p_vnode = vfs_root_vn;
                 index = 1;
-                dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
         }else if(base==NULL){
-                p_vnode = curproc->p_cwd;
-                dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
+                p_vnode = curproc->p_cwd; 
         }else{
                 p_vnode = base;
-                dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                dbg(DBG_PRINT, "(GRADING2B)\n");
         }
         vref(p_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+        //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
         //pathname resolution
         while(1){
                 int start = index;
                 while(index < pathlen && pathname[index]!='/'){
                         index++;
                         dbg(DBG_PRINT, "(GRADING2B)\n");
-                        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                        //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                 }
                 if(index == pathlen){
                         dbg(DBG_PRINT, "(GRADING2B)\n");
-                        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                        //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                         (*res_vnode) = p_vnode;
                         if(start == index){
                                 (*name) = "";
@@ -147,45 +139,46 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                         }
                         (*namelen) = strlen(*name);
                         dbg(DBG_PRINT, "(GRADING2B)\n");
-                        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                       // dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                         break;
                 }else{ 
-                        //need know max pathname length
                         dbg(DBG_PRINT, "(GRADING2B)\n");
-                        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
-                        char curname[100];
+                        //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                        char curname[MAXPATHLEN];
                         memcpy(curname, pathname+start, index-start);
                         vnode_t *c_vnode;
                         int retval = lookup(p_vnode, curname, index-start, &c_vnode);
                         if(retval < 0){
                                 vput(p_vnode);
                                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                                dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                                //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                                 return retval;
                         }else{
                                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                                dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                                //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                                 vput(p_vnode);
                                 p_vnode = c_vnode;
                                 index++;
                                 while(index < pathlen && pathname[index]=='/'){
                                         index++;
-                                        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                                        //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                                         dbg(DBG_PRINT, "(GRADING2B)\n");
                                 }
                                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                                dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                                //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                         }
                         dbg(DBG_PRINT, "(GRADING2B)\n");
-                        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                        //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
                 }
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
         }
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
+       //dbg(DBG_PRINT, "(GRADING2A 2.b)\n");
         return 0;
+        
 }
+
 
 /* This returns in res_vnode the vnode requested by the other parameters.
  * It makes use of dir_namev and lookup to find the specified vnode (if it
@@ -202,23 +195,18 @@ int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
         //NOT_YET_IMPLEMENTED("VFS: open_namev");
-        dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
-        KASSERT(NULL != pathname); /* the "pathname" argument must be non-NULL */
-        dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
-        KASSERT(NULL != res_vnode); /* the "res_vnode" argument must be non-NULL */
         size_t namelen;
         const char *name = NULL;
         vnode_t *res_parent_vnode;
         int retval = dir_namev(pathname, &namelen, &name, base, &res_parent_vnode);
         if(retval < 0){
                 dbg(DBG_PRINT, "(GRADING2B)\n");
-                dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
+                //dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
                 return retval;
         }
         retval = lookup(res_parent_vnode, name, namelen, res_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
+        //dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
         if(retval == -ENOENT){
                 if((flag & O_CREAT) == O_CREAT){
                         //create
@@ -238,7 +226,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         }
         vput(res_parent_vnode);
         dbg(DBG_PRINT, "(GRADING2B)\n");
-        dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
+       // dbg(DBG_PRINT, "(GRADING2A 2.c)\n");
         return retval;
 }
 
